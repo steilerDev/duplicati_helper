@@ -1,0 +1,52 @@
+# This file configures personal settings about duplicati used by the helper script
+
+# Remote backup config
+## The auth id, that you need to obtain using the steps provided by duplicati
+AUTH_ID=""
+## Add the directory, all your backups will be put in. The seperate configured backups will be put into subfolder with their name
+## Note: I only tested this script for Amazon Cloud Drive, feel free to let me know if there are any changes required for other hosters
+BASE_URL="amzcd:///"
+
+# Duplicati config
+## This is the path to the duplicati executable
+DUPLICATI="mono /opt/duplicati/Duplicati.CommandLine.exe"
+
+# Log config
+## This is the directory where your log files will be put in.
+LOG_PATH="/var/log/"
+## This is the prefix every log file will get. The log files will be named using the following schema: prefix.backupName.log
+LOG_PREFIX="duplicati"
+## The duplicati log level
+## Available log levels: "Error", "Warning", "Information", "Profiling"
+LOG_LEVEL="Information"
+
+# Duplicati server config
+## This is the path to the duplicati server executable
+DUPLICATI_SERVER="mono /opt/duplicati/Duplicati.Server.exe"
+## This is the port of the duplicati web page. It will be reachable from every host.
+SERVER_PORT="8200"
+## This is the password required to log into the web interface.
+SERVER_PAS="Password1!"
+
+# Helper config
+## This is the path to the backup configuration file
+BACKUP_CONFIG="/opt/duplicati_helper/backup.conf.example"
+
+# Advanced duplicati settings
+## These are command line arguments for duplicati, sorted by topic. 
+COMPRESSION_MODULE="--compression-module=\"7z\" --7z-compression-level=7"
+ENCRYPTION_MODULE="--encryption-module=\"aes\""
+BACKUP_MODULE="--number-of-retries=25 --keep-time=\"3M\" --dblock-size=\"200mb\" --snapshot-policy=\"on\""
+UPDATE_POLICY=InstallBefore
+
+# Advanced helper settings
+## This status file will hold the information about the status of previous backups. Use duplicatirc to display it at log in. 
+BACKUP_STATUS_FILE="/opt/duplicati_helper/backup.status"
+## The directory to store the PID files of running duplicati jobs.
+PID_DIR="/run/"
+## The prefix every duplicati job PID file will get. The following schema will be used: prefix.backupName.pid
+DUPLICATI_PID_PREFIX="duplicati"
+## The name of the shutdown postponing script's PID
+SHUTDOWN_PID_PREFIX="shutdown"
+## The path to the original shutdown binary
+SHUTDOWN_BIN="/sbin/shutdown-bin"

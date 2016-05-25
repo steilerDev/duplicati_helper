@@ -1,0 +1,4 @@
+# This file configures the available backups. Paths, names and password are not allowed to contain whitespaces.
+# Please choose a secure password for each backup, do not repeate passwords
+# Backup name   Backup path             Backup password                                     Excluding paths
+root            /                       Password1!                                          --exclude="/dev/" --exclude="/media/" --exclude="/proc/" --exclude="/run/" --exclude="/sys/" --exclude="/tmp/"
