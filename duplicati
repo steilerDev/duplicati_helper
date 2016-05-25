@@ -207,7 +207,7 @@ exit_duplicati () {
             STATUS="NOT successfully" ;;
     esac
 
-    THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
+    THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
     if [ -z $JOB_NAME ] ; then
         JOB_NAME="Unknown"
         THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.log"
