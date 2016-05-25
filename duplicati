@@ -99,7 +99,7 @@ run_duplicati () {
     # 7) Add optional excludes
     DUPLICATI_ARG="${DUPLICATI_ARG} ${excl}"
 
-    # 7) Check if quite flag is set
+    # 8) Check if quite flag is set
     QUIET=""
     if [ "$3" = "quiet" ] ; then
         DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true"

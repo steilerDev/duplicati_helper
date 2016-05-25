@@ -1,7 +1,7 @@
 # This file configures personal settings about duplicati used by the helper script
 
 # Remote backup config
-## The auth id, that you need to obtain using the steps provided by duplicati
+## The auth id, that you need to obtain from https://duplicati-oauth-handler.appspot.com
 AUTH_ID=""
 ## Add the directory, all your backups will be put in. The seperate configured backups will be put into subfolder with their name
 ## Note: I only tested this script for Amazon Cloud Drive, feel free to let me know if there are any changes required for other hosters
