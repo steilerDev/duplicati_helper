@@ -1,0 +1,46 @@
+#!/bin/bash
+####
+# This file is intended to be included into the .bashrc file via 'source'
+# This short script checks if the backup is currently running or if there was a
+# backup since the last log on. 
+####
+
+# Get configuration
+source /opt/duplicati_helper/duplicati.conf
+
+# Set duplicati update policy
+export AUTOUPDATER_Duplicati_POLICY=$UPDATE_POLICY
+
+DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
+SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
+
+# Is duplicati running
+if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
+    echo
+    echo "Backup job(s), that are currently running:"
+    for f in ${DUPLICATI_PIDS} ; do
+        # Get job name out of pid file name
+        f="${f//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
+        f="${f//.pid}"
+        echo "    $f"
+    done
+fi
+
+# Is a shutdown scheduled?
+if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
+    echo
+    echo "## Shutdown is scheduled ##"
+fi
+
+# What is the status of previous backups?
+if [ -e $BACKUP_STATUS_FILE ] ; then
+    echo
+    echo "Backup job(s), that finished since your last login:"
+    while read -r name time status ; do
+        echo "    ${name}: Finished ${status} at ${time}"
+    done < "${BACKUP_STATUS_FILE}"
+    rm ${BACKUP_STATUS_FILE}
+else
+    echo
+    echo "No backup job finished since your last login"
+fi

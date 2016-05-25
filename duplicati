@@ -1,0 +1,236 @@
+#!/bin/bash
+
+####
+# This file is intended to give a more natural interface to the duplicati command
+# line interface, simplifying automated backups.
+####
+
+# Getting helper configuration
+source /opt/duplicati_helper/duplicati.conf
+
+main () { 
+    if [ "$1" = "command" ] ; then
+        ## Run duplicati with the provided arguments
+            shift
+            ${DUPLICATI} $@
+            exit $?
+    elif [ "$1" = "server" ] ; then
+        ## Start the Webserver
+            ${DUPLICATI_SERVER} --webservice-port=${SERVER_PORT} --webservice-interface=* --webservice-password=${SERVER_PAS}
+            exit $?
+    elif [ "$1" = "usage" ] ; then
+        ## Show usage of running duplicati processes using top
+            duplicati_usage
+    elif [ "$#" -lt 2 ] ; then 
+        ## If provided arguments do not fit, show help
+            help
+    elif ( [ "$1" == "repair" ] || [ "$1" == "backup" ] ) ; then
+        ## Backup or repair specified backup
+            run_duplicati $1 $2 $3
+    elif ( [ "$1" == "kill" ] ) ; then
+        ## Kill running duplicati process
+            kill_duplicati $2
+    fi
+}
+
+# Choses the right backup config and starts it
+# $1: "repair" or "backup" depending
+# $2: name of backup 
+# $3: 'quiet', optional
+run_duplicati () {
+
+    # Load the correct configuration
+    while read -r name path pas excl ; do
+        if [[ $name == \#* ]] ; then
+            # Ignore lines with pound
+            continue
+        elif [ $2 = $name ] ; then
+            # If this is the choosen backup, start backup
+            break
+        else
+            # Clear name, in case it did not match
+            name=""
+        fi
+    done < "${BACKUP_CONFIG}"
+    
+    # If no config was found, exit
+    if [ -z $name ] ; then
+        echo "No backup config fig with name $2 found!"
+        echo
+        help
+    fi
+
+    # Check if backup is allready running
+    THIS_DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.${name}.pid"
+
+    if [ -e ${THIS_DUPLICATI_PID} ] ; then
+        ## If duplicati is currently performing a backup you can't start another one
+            echo "Duplicati already running"
+            exit_duplicati 5 ${name}
+    fi
+
+    # Building arguments
+
+    # 1) Remote directory
+    DUPLICATI_ARG="${BASE_URL}/${name}"
+    
+    # 2) Repair or backup
+    if [ "$1" = "repair" ] ; then
+        DUPLICATI_ARG="repair ${DUPLICATI_ARG}"
+    elif [ "$1" = "backup" ] ; then
+        DUPLICATI_ARG="backup ${DUPLICATI_ARG} ${path}"
+    else
+        help
+    fi
+
+    # 3) Backup name and prefix
+    DUPLICATI_ARG="${DUPLICATI_ARG} --backup-name=\"${name}\" --prefix=\"${name}\""
+
+    # 4) Set passphrase
+    DUPLICATI_ARG="${DUPLICATI_ARG} --passphrase=\"${pas}\""
+
+    # 5) Set log settings
+    THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
+    DUPLICATI_ARG="${DUPLICATI_ARG} --log-file=\"${THIS_LOG_PATH}\" --log-level=\"${LOG_LEVEL}\""
+
+    # 6) Add fixed parameters
+    DUPLICATI_ARG="${DUPLICATI_ARG} --authid=\"${AUTH_ID}\" ${COMPRESSION_MODULE} ${ENCRYPTION_MODULE} ${BACKUP_MODULE}" 
+
+    # 7) Add optional excludes
+    DUPLICATI_ARG="${DUPLICATI_ARG} ${excl}"
+
+    # 7) Check if quite flag is set
+    QUIET=""
+    if [ "$3" = "quiet" ] ; then
+        DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true"
+#        QUIET=">> ${THIS_LOG_PATH} 2>&1"
+    fi
+
+    # Running command
+    ${DUPLICATI} ${DUPLICATI_ARG} ${QUIET} & echo $! > ${THIS_DUPLICATI_PID}
+    wait $(cat ${THIS_DUPLICATI_PID}) 
+    success=$?
+   
+    rm ${THIS_DUPLICATI_PID}
+    exit_duplicati $success ${name}
+}
+
+# Kills a running instance of duplicati
+# $1: Name of the backup instance
+kill_duplicati () {
+    THIS_DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.$1.pid"
+
+    if [ -e ${THIS_DUPLICATI_PID} ] && ps -p $(cat ${THIS_DUPLICATI_PID}) > /dev/null ; then
+        sudo kill -9 $(cat ${THIS_DUPLICATI_PID})
+        sleep 5
+
+        exit_duplicati 4 $1
+    else
+        # Duplicati is not running, can't kill it
+            echo "Duplicati not running"
+            exit_duplicati 3 $1
+    fi
+}
+
+duplicati_usage () {
+    DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
+
+    if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
+        TOP_CMD="top -c "
+
+        for f in ${DUPLICATI_PIDS} ; do
+            TOP_CMD="${TOP_CMD} -p $(cat $f)"
+        done
+
+        ${TOP_CMD}
+    else
+        echo "No instance of duplicati is running" 
+    fi
+    
+    exit
+}
+
+help () {
+    echo "Usage: "
+    echo "  Backup/Repair:  $0 {repair | backup} <backup name> { quiet | }" 
+    echo "      Currently configured backups:"
+    
+    while read -r name path pas excl ; do
+        if [[ $name == \#* ]] ; then
+            # Ignore lines with pound
+            continue
+        else
+            echo "          ${name}: ${path}"
+        fi
+    done < "${BACKUP_CONFIG}"
+
+    echo "      Optional parameter 'quiet' will relay all output to ${DUPLICATI_LOG}"
+    echo "  Kill:           $0 kill <backup name>"
+    echo "      Kills the specified backup job"
+    echo "  Server:         $0 server"
+    echo "      The duplicati webinterface is started on port ${SERVER_PORT} with password '${SERVER_PAS}'"
+    echo "  Usage:          $0 usage"
+    echo "      Shows the usage of all running duplicati jobs using top"
+    echo "  Duplicati:      $0 command"
+    echo "      The duplicati command line interface is started with all arguments that follow 'command'"
+    exit_duplicati 3 "[help]"
+}
+
+# Exits duplicati and writes the result to the status file
+# $1 Exit code: 
+#   0: Successfull
+#   1: Successfull, but backup didn't change anything
+#   2: Successfull, with warnings
+#   3: Not successfull, wrong syntax
+#   4: Not successfull, instance killed
+#   5: Not successfull, another instance was allready running
+# $2 Backup job name
+exit_duplicati () {
+    STATUS=""
+    JOB_NAME=$2
+    JOB_TIME="$(date +'%d/%m/%y_%H:%M:%S')"
+
+    case "$1" in
+        0)
+            STATUS="successfully" ;;
+        1)
+            STATUS="successfully [no files were changed]" ;;
+        2)
+            STATUS="successfully [with warnings]" ;;
+        3)
+            STATUS="NOT successfully [wrong syntax]" ;;
+        4)
+            STATUS="NOT successfully [instance was killed]" ;;
+        5)
+            STATUS="NOT successfully [instance was allready running]" ;;
+        *)
+            STATUS="NOT successfully" ;;
+    esac
+
+    THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
+    if [ -z $JOB_NAME ] ; then
+        JOB_NAME="Unknown"
+        THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.log"
+    fi
+
+    # Write to log
+    echo "${JOB_TIME}: Backup job \"${JOB_NAME}\" finished ${STATUS}" >> ${THIS_LOG_PATH}
+
+    # Modify status file unless status code is 3 or 5
+    if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
+        touch ${BACKUP_STATUS_FILE}
+        chown :staff ${BACKUP_STATUS_FILE}
+        chmod ugo+rw ${BACKUP_STATUS_FILE} 
+    
+        # 1) Delete earlier status of this job
+        sed -i '/^'"${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
+    
+        # 2) Add new status
+        echo "${JOB_NAME} ${JOB_TIME} ${STATUS}" >> ${BACKUP_STATUS_FILE}
+    fi 
+    
+    exit $1
+}
+
+main $@
+exit -1

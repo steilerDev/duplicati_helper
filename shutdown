@@ -1,0 +1,36 @@
+#!/bin/bash
+# This script checks if a backup is currently running and will postpone the shutdown
+# Using -c, a previous shutdown is cancelled
+# Using -r, a reboot is performed, as soon as the backup job is finished
+# Using /sbin/shutdown-bin a shutdown can be forced
+
+# Get configuration
+source /opt/duplicati_helper/duplicati.conf
+
+DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
+SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
+
+# Shutdown scheduled
+if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
+    if [ "$1" = "-c" ] ; then
+        kill -9 $(cat $SHUTDOWN_PID)
+        exit 0
+    else
+        echo "Shutdown is allready waiting for backup to finish"
+        exit 0
+    fi
+# Duplicati running
+if ls $DUPLICATI_PID 1> /dev/null 2>&1; then
+    $SHUTDOWN_BIN -k now ": ### Not shutting down yet, because backup job is running. Waiting for it to finish and shutting down afterwards ###)"
+    echo "Not shutting down yet, because backup job is running. Waiting for it to finish and shutting down afterwards"
+    echo $$ > $SHUTDOWN_PID
+    while ls $DUPLICATI_PID 1> /dev/null 2>&1; do
+        sleep 20
+    done
+fi
+
+if [ "$1" = "-r" ] ; then
+    $SHUTDOWN_BIN -r now
+else
+    $SHUTDOWN_BIN -h now
+fi
