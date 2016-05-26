@@ -123,6 +123,10 @@ kill_duplicati () {
     if [ -e ${THIS_DUPLICATI_PID} ] && ps -p $(cat ${THIS_DUPLICATI_PID}) > /dev/null ; then
         sudo kill -9 $(cat ${THIS_DUPLICATI_PID})
         sleep 5
+        
+        if [ -e ${THIS_DUPLICATI_PID} ] ; then
+            rm -f ${THIS_DUPLICATI_PID}
+        fi
 
         exit_duplicati 4 $1
     else
