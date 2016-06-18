@@ -14,33 +14,74 @@ export AUTOUPDATER_Duplicati_POLICY=$UPDATE_POLICY
 DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
 SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
 
+# A horizontal line
+HR="+----+----------+---------------------+-------------------------------------------------+"
+
+# Print table header
+echo "B A C K U P  S T A T U S"
+
+echo "$HR"
+echo "|    |   Name   |        Time         |                     Status                      |"
+echo "$HR"
+
+# Prints a proper alligned line for the table
+# $1 Name column (max. length 8)
+# $2 Time column (max. length 19)
+# $3 Status column (max. length 48)
+# $4 Prop column (optional, max. length 2)
+printLine() {
+    # Available spaces for column
+    SPACES="                                                  "
+    PROP_COL=2
+    NAME_COL=8
+    TIME_COL=19
+    STAT_COL=48
+    
+    echo -n "| " 
+    echo -n "$4 $SPACES" | head -c $PROP_COL
+    echo -n " | "
+    echo -n "$1 $SPACES" | head -c $NAME_COL 
+    echo -n " | "
+    echo -n "$2 $SPACES" | head -c $TIME_COL
+    echo -n " | "
+    echo -n "$3 $SPACES" | head -c $STAT_COL
+    echo "|"
+}
+
 # Is duplicati running
 if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
-    echo
-    echo "Backup job(s), that are currently running:"
     for f in ${DUPLICATI_PIDS} ; do
+        FILE_DATE=$(stat -c '%y' $f)
+        # Replace spaces
+        FILE_DATE=${FILE_DATE// /_}
+#        FILE_DATE="abs"
         # Get job name out of pid file name
         f="${f//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
         f="${f//.pid}"
-        echo "    $f"
+        
+        printLine $f $FILE_DATE "running"
+        # Print running jobs
     done
+    echo "$HR"
+fi
+
+# What is the status of previous backups?
+if [ -e $BACKUP_STATUS_FILE ] ; then
+    # Status describes, if the backup status was read earlier, if status is '+' it is an unread entry that needs to be marked read, '-' means that it was read earlier
+    while read -r status name time status ; do
+        PROP=""
+        if [ "${status}" == "+" ] ; then
+            PROP="*"
+            sed -i '/^'"${name}"' /d' ${BACKUP_STATUS_FILE} 
+            echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
+        fi
+        printLine ${name} ${time} ${status} $PROP
+    done < "${BACKUP_STATUS_FILE}"
+    echo "$HR"
 fi
 
 # Is a shutdown scheduled?
 if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
     echo
     echo "## Shutdown is scheduled ##"
-fi
-
-# What is the status of previous backups?
-if [ -e $BACKUP_STATUS_FILE ] ; then
-    echo
-    echo "Backup job(s), that finished since your last login:"
-    while read -r name time status ; do
-        echo "    ${name}: Finished ${status} at ${time}"
-    done < "${BACKUP_STATUS_FILE}"
-    rm ${BACKUP_STATUS_FILE}
-else
-    echo
-    echo "No backup job finished since your last login"
 fi

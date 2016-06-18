@@ -122,7 +122,7 @@ kill_duplicati () {
 
     if [ -e ${THIS_DUPLICATI_PID} ] && ps -p $(cat ${THIS_DUPLICATI_PID}) > /dev/null ; then
         sudo kill -9 $(cat ${THIS_DUPLICATI_PID})
-        sleep 5
+        sleep 1
         
         if [ -e ${THIS_DUPLICATI_PID} ] ; then
             rm -f ${THIS_DUPLICATI_PID}
@@ -206,7 +206,7 @@ exit_duplicati () {
         4)
             STATUS="NOT successfully [instance was killed]" ;;
         5)
-            STATUS="NOT successfully [instance was allready running]" ;;
+            STATUS="NOT successfully [instance was already running]" ;;
         *)
             STATUS="NOT successfully" ;;
     esac
@@ -223,14 +223,13 @@ exit_duplicati () {
     # Modify status file unless status code is 3 or 5
     if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
         touch ${BACKUP_STATUS_FILE}
-        chown :staff ${BACKUP_STATUS_FILE}
         chmod ugo+rw ${BACKUP_STATUS_FILE} 
     
         # 1) Delete earlier status of this job
         sed -i '/^'"${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
     
         # 2) Add new status
-        echo "${JOB_NAME} ${JOB_TIME} ${STATUS}" >> ${BACKUP_STATUS_FILE}
+        echo "+ ${JOB_NAME} ${JOB_TIME} ${STATUS}" >> ${BACKUP_STATUS_FILE}
     fi 
     
     exit $1
