@@ -25,10 +25,10 @@ echo "|    |   Name   |        Time         |                     Status        
 echo "$HR"
 
 # Prints a proper alligned line for the table
-# $1 Name column (max. length 8)
-# $2 Time column (max. length 19)
-# $3 Status column (max. length 48)
-# $4 Prop column (optional, max. length 2)
+# $1 Prop column (optional, only '+' allowed max. length 2)
+# $2 Name column (no spaces allowed, max. length 8)
+# $3 Time column (no spaces allowed, max. length 19)
+# $4 Status column (max. length 48)
 printLine() {
     # Available spaces for column
     SPACES="                                                  "
@@ -38,13 +38,21 @@ printLine() {
     STAT_COL=48
     
     echo -n "| " 
-    echo -n "$4 $SPACES" | head -c $PROP_COL
+    if [ "$1" == "+" ] ; then
+        echo -n "+ "
+        shift
+    else
+        echo -n "  "
+    fi
+     
     echo -n " | "
     echo -n "$1 $SPACES" | head -c $NAME_COL 
     echo -n " | "
-    echo -n "$2 $SPACES" | head -c $TIME_COL
+    shift
+    echo -n "$1 $SPACES" | head -c $TIME_COL
     echo -n " | "
-    echo -n "$3 $SPACES" | head -c $STAT_COL
+    shift
+    echo -n "$@ $SPACES" | head -c $STAT_COL
     echo "|"
 }
 
@@ -54,7 +62,6 @@ if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
         FILE_DATE=$(stat -c '%y' $f)
         # Replace spaces
         FILE_DATE=${FILE_DATE// /_}
-#        FILE_DATE="abs"
         # Get job name out of pid file name
         f="${f//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
         f="${f//.pid}"
@@ -71,11 +78,11 @@ if [ -e $BACKUP_STATUS_FILE ] ; then
     while read -r status name time status ; do
         PROP=""
         if [ "${status}" == "+" ] ; then
-            PROP="*"
-            sed -i '/^'"${name}"' /d' ${BACKUP_STATUS_FILE} 
+            PROP="+"
+            sed -i '/^\(-\|+\)'" ${name}"' /d' ${BACKUP_STATUS_FILE} 
             echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
         fi
-        printLine ${name} ${time} ${status} $PROP
+        printLine $PROP ${name} ${time} ${status}
     done < "${BACKUP_STATUS_FILE}"
     echo "$HR"
 fi
