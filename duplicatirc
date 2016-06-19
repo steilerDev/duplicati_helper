@@ -77,9 +77,10 @@ if [ -e $BACKUP_STATUS_FILE ] ; then
     # Status describes, if the backup status was read earlier, if status is '+' it is an unread entry that needs to be marked read, '-' means that it was read earlier
     while read -r prop name time status ; do
         if [ "${prop}" == "+" ] ; then
-            prop=""
             sed -i '/^\(-\|+\) '"${name}"' /d' ${BACKUP_STATUS_FILE} 
             echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
+        else
+            prop=""
         fi
         printLine ${prop} ${name} ${time} ${status}
     done < "${BACKUP_STATUS_FILE}"
