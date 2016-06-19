@@ -229,7 +229,7 @@ exit_duplicati () {
         sed -i '/^\(+\|-\)'" ${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
     
         # 2) Add new status
-        echo "+ ${JOB_NAME} ${JOB_TIME} ${STATUS}" >> ${BACKUP_STATUS_FILE}
+        echo "+ ${JOB_NAME} ${JOB_TIME} ${STATUS} {Code: $1}" >> ${BACKUP_STATUS_FILE}
     fi 
     
     exit $1
