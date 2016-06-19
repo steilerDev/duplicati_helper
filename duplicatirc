@@ -15,34 +15,34 @@ DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
 SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
 
 # A horizontal line
-HR="+----+----------+---------------------+-------------------------------------------------+"
+HR="+-----+----------+---------------------+-------------------------------------------------+"
 
 # Print table header
 echo "B A C K U P  S T A T U S"
 
 echo "$HR"
-echo "|    |   Name   |        Time         |                     Status                      |"
+echo "|     |   Name   |        Time         |                     Status                      |"
 echo "$HR"
 
 # Prints a proper alligned line for the table
-# $1 Prop column (optional, only '+' allowed max. length 2)
+# $1 Prop column (optional, only '+' allowed max. length 3)
 # $2 Name column (no spaces allowed, max. length 8)
 # $3 Time column (no spaces allowed, max. length 19)
-# $4 Status column (max. length 48)
+# $4 Status column (max. length 47)
 printLine() {
     # Available spaces for column
     SPACES="                                                  "
     PROP_COL=2
     NAME_COL=8
     TIME_COL=19
-    STAT_COL=48
+    STAT_COL=47
     
     echo -n "| " 
     if [ "$1" == "+" ] ; then
-        echo -n "+ "
+        echo -n " + "
         shift
     else
-        echo -n "  "
+        echo -n "   "
     fi
      
     echo -n " | "
@@ -53,7 +53,7 @@ printLine() {
     echo -n " | "
     shift
     echo -n "$@ $SPACES" | head -c $STAT_COL
-    echo "|"
+    echo " |"
 }
 
 # Is duplicati running
@@ -75,14 +75,13 @@ fi
 # What is the status of previous backups?
 if [ -e $BACKUP_STATUS_FILE ] ; then
     # Status describes, if the backup status was read earlier, if status is '+' it is an unread entry that needs to be marked read, '-' means that it was read earlier
-    while read -r status name time status ; do
-        PROP=""
-        if [ "${status}" == "+" ] ; then
-            PROP="+"
-            sed -i '/^\(-\|+\)'" ${name}"' /d' ${BACKUP_STATUS_FILE} 
+    while read -r prop name time status ; do
+        if [ "${prop}" == "+" ] ; then
+            prop=""
+            sed -i '/^\(-\|+\) '"${name}"' /d' ${BACKUP_STATUS_FILE} 
             echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
         fi
-        printLine $PROP ${name} ${time} ${status}
+        printLine ${prop} ${name} ${time} ${status}
     done < "${BACKUP_STATUS_FILE}"
     echo "$HR"
 fi
