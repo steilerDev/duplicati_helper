@@ -20,8 +20,10 @@ This repository contains different components, that can be used indipendent of e
 1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
 2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
 3. In case you want a shutdown delayed by running duplicati jobs, do the following:
-..* `mv /sbin/shutdown /sbin/shutdown-bin`
-..* `ln -s /opt/duplicati_helper/shutdown`
-4. In order to show the backup status, during log-in on the console, include `source /opt/duplicati_helper/duplicatirc` in your `~/.bashrc` (or similiar depending on your bash)
-5. Configure your backups, using `/opt/duplicati_helper/backup.conf.example`
-6. Configure your duplicati settings using `/opt/duplicati_helper/duplicati.conf.example`, if you want or need to change default values
+  * `mv /sbin/shutdown /sbin/shutdown-bin`
+  * `ln -s /opt/duplicati_helper/shutdown`
+  * Make sure the access rights to `/opt/duplicati_helper/shutdown` match `/sbin/shutdown-bin`
+4. In order to show the backup status during log-in on the console, include `source /opt/duplicati_helper/duplicatirc` in your `~/.bashrc` (or similiar depending on your bash)
+5. Configure your general duplicati settings based on the provided example in `/opt/duplicati_helper/duplicati.conf.example`
+6. Configure your backups based on the provided example in `/opt/duplicati_helper/backup.conf.example`
+7. In order for the helper scripts to use your `duplicati.conf` file, you either need to move it to `/opt/duplicati_helper/duplicati.conf`, or you need to modify the second line (`source /opt/duplicati_helper/duplicati.conf`) of `duplicatirc`, `duplicati` and `shutdown`, pointing to your configuration path.

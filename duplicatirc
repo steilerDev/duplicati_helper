@@ -1,12 +1,10 @@
 #!/bin/bash
+source /opt/duplicati_helper/duplicati.conf
 ####
 # This file is intended to be included into the .bashrc file via 'source'
 # This short script checks if the backup is currently running or if there was a
 # backup since the last log on. 
 ####
-
-# Get configuration
-source /opt/duplicati_helper/duplicati.conf
 
 # Set duplicati update policy
 export AUTOUPDATER_Duplicati_POLICY=$UPDATE_POLICY
