@@ -1,4 +1,4 @@
-# Duplicati_Helper
+# Duplicati Helper
 This repository is a collection of helper scripts, simplifying the interface of duplicati, making it reusable, easy to configure and ready for cron deployment. This collection of scripts is intended for administrators, solely relying on the command line interface on Linux machines.
 
 **Disclaimer**: This project is developed independent from [duplicati](https://github.com/duplicati/duplicati) and is intended to be used with duplicati v.2 Beta. I am only testing these helpers with Amazon Cloud Drive, other providers should work as well, however you might need to modify the script slightly.

@@ -19,6 +19,10 @@ main () {
     elif [ "$1" = "usage" ] ; then
         ## Show usage of running duplicati processes using top
             duplicati_usage
+    elif [ "$1" = "status" ] ; then
+        ## Show the status, displayed 
+            source $DUPLICATIRC
+            exit
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
@@ -173,6 +177,8 @@ help () {
     echo "      The duplicati webinterface is started on port ${SERVER_PORT} with password '${SERVER_PAS}'"
     echo "  Usage:          $0 usage"
     echo "      Shows the usage of all running duplicati jobs using top"
+    echo "  Status:         $0 status"
+    echo "      Shows the status table, shown during log in"
     echo "  Duplicati:      $0 command"
     echo "      The duplicati command line interface is started with all arguments that follow 'command'"
     exit_duplicati 3 "[help]"

@@ -31,6 +31,8 @@ SERVER_PAS="Password1!"
 # Helper config
 ## This is the path to the backup configuration file
 BACKUP_CONFIG="/opt/duplicati_helper/backup.conf.example"
+## This is the path to the duplicatirc file
+DUPLICATIRC="/opt/duplicati_helper/duplicatirc"
 
 # Advanced duplicati settings
 ## These are command line arguments for duplicati, sorted by topic. 
