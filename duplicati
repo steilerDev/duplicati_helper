@@ -200,19 +200,19 @@ exit_duplicati () {
 
     case "$1" in
         0)
-            STATUS="successfully" ;;
+            STATUS="successful" ;;
         1)
-            STATUS="successfully [no files were changed]" ;;
+            STATUS="successful [no files were changed]" ;;
         2)
-            STATUS="successfully [with warnings]" ;;
+            STATUS="successful [with warnings]" ;;
         3)
-            STATUS="NOT successfully [wrong syntax]" ;;
+            STATUS="NOT successful [wrong syntax]" ;;
         4)
-            STATUS="NOT successfully [instance was killed]" ;;
+            STATUS="NOT successful [instance was killed]" ;;
         5)
-            STATUS="NOT successfully [instance was already running]" ;;
+            STATUS="NOT successful [instance was already running]" ;;
         *)
-            STATUS="NOT successfully" ;;
+            STATUS="NOT successful" ;;
     esac
 
     THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"

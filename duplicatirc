@@ -13,34 +13,34 @@ DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
 SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
 
 # A horizontal line
-HR="+-----+----------+---------------------+-------------------------------------------------+"
+HR="+---+----------+---------------------+-----------------------------------------+"
 
 # Print table header
 echo "B A C K U P  S T A T U S"
 
 echo "$HR"
-echo "|     |   Name   |        Time         |                     Status                      |"
+echo "|   |   Name   |        Time         |                 Status                  |"
 echo "$HR"
 
 # Prints a proper alligned line for the table
-# $1 Prop column (optional, only '+' allowed max. length 3)
+# $1 Prop column (optional, only '+' allowed max. length 2)
 # $2 Name column (no spaces allowed, max. length 8)
 # $3 Time column (no spaces allowed, max. length 19)
-# $4 Status column (max. length 47)
+# $4 Status column (max. length 39)
 printLine() {
     # Available spaces for column
-    SPACES="                                                  "
-    PROP_COL=2
+    SPACES="                                        "
+    PROP_COL=1
     NAME_COL=8
     TIME_COL=19
-    STAT_COL=47
+    STAT_COL=39
     
     echo -n "| " 
     if [ "$1" == "+" ] ; then
-        echo -n " + "
+        echo -n "+" | head -c $PROP_COL
         shift
     else
-        echo -n "   "
+        echo -n " " | head -c $PROP_COL
     fi
      
     echo -n " | "
