@@ -11,18 +11,18 @@ main () {
         ## Run duplicati with the provided arguments
             shift
             ${DUPLICATI} $@
-            exit $?
+            exit_duplicati $? "command"
     elif [ "$1" = "server" ] ; then
         ## Start the Webserver
             ${DUPLICATI_SERVER} --webservice-port=${SERVER_PORT} --webservice-interface=* --webservice-password=${SERVER_PAS}
-            exit $?
+            exit_duplicati $? "server"
     elif [ "$1" = "usage" ] ; then
         ## Show usage of running duplicati processes using top
             duplicati_usage
     elif [ "$1" = "status" ] ; then
         ## Show the status, displayed 
             source $DUPLICATIRC
-            exit
+            exit_duplicati 1 "status"
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
@@ -68,7 +68,7 @@ run_duplicati () {
     if [ -e ${THIS_DUPLICATI_PID} ] ; then
         ## If duplicati is currently performing a backup you can't start another one
             echo "Duplicati already running"
-            exit_duplicati 5 ${name}
+            exit_duplicati 5 $1 ${name}
     fi
 
     # Building arguments
@@ -114,7 +114,7 @@ run_duplicati () {
     success=$?
    
     rm ${THIS_DUPLICATI_PID}
-    exit_duplicati $success ${name}
+    exit_duplicati $success $1 ${name}
 }
 
 # Kills a running instance of duplicati
@@ -130,11 +130,11 @@ kill_duplicati () {
             rm -f ${THIS_DUPLICATI_PID}
         fi
 
-        exit_duplicati 4 $1
+        exit_duplicati 4 "kill" $1
     else
         # Duplicati is not running, can't kill it
             echo "Duplicati not running"
-            exit_duplicati 3 $1
+            exit_duplicati 3 "kill" $1
     fi
 }
 
@@ -153,7 +153,7 @@ duplicati_usage () {
         echo "No instance of duplicati is running" 
     fi
     
-    exit
+    exit_duplicati 1 "usage"
 }
 
 help () {
@@ -181,7 +181,7 @@ help () {
     echo "      Shows the status table, shown during log in"
     echo "  Duplicati:      $0 command"
     echo "      The duplicati command line interface is started with all arguments that follow 'command'"
-    exit_duplicati 3 "[help]"
+    exit_duplicati 3 "help"
 }
 
 # Exits duplicati and writes the result to the status file
@@ -192,42 +192,44 @@ help () {
 #   3: Not successfull, wrong syntax
 #   4: Not successfull, instance killed
 #   5: Not successfull, another instance was allready running
-# $2 Backup job name
+# $2 Backup job function (e.g. repair, backup...)
+# $3 Backup job name, optional
 exit_duplicati () {
     STATUS=""
-    JOB_NAME=$2
+    JOB_FUNC= "$2 "
+    JOB_NAME=$3
     JOB_TIME="$(date +'%Y-%m-%d_%H:%M:%S')"
-
+ 
     case "$1" in
         0)
-            STATUS="successful" ;;
+            STATUS="${JOB_FUNC}successful" ;;
         1)
-            STATUS="successful [no files were changed]" ;;
+            STATUS="${JOB_FUNC}successful [no files were changed]" ;;
         2)
-            STATUS="successful [with warnings]" ;;
+            STATUS="${JOB_FUNC}successful [with warnings]" ;;
         3)
-            STATUS="NOT successful [wrong syntax]" ;;
+            STATUS="${JOB_FUNC}NOT successful [wrong syntax]" ;;
         4)
-            STATUS="NOT successful [instance was killed]" ;;
+            STATUS="${JOB_FUNC}NOT successful [instance was killed]" ;;
         5)
-            STATUS="NOT successful [instance was already running]" ;;
+            STATUS="${JOB_FUNC}NOT successful [instance was already running]" ;;
         100)
-            STATUS="NOT successful [repair required]" ;;
+            STATUS="${JOB_FUNC}NOT successful [repair required]" ;;
         *)
-            STATUS="NOT successful" ;;
+            STATUS="${JOB_FUNC}NOT successful" ;;
     esac
 
-    THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
     if [ -z $JOB_NAME ] ; then
-        JOB_NAME="Unknown"
         THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.log"
+    else
+        THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
     fi
 
     # Write to log
-    echo "${JOB_TIME}: Backup job \"${JOB_NAME}\" finished ${STATUS}" >> ${THIS_LOG_PATH}
+    echo "${JOB_TIME}: Job \"${JOB_FUNC}${JOB_NAME}\" finished ${STATUS}" >> ${THIS_LOG_PATH}
 
     # Modify status file unless status code is 3 or 5
-    if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
+    if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] && [ ! -z $JOB_NAME ] ; then
         touch ${BACKUP_STATUS_FILE}
         chmod ugo+rw ${BACKUP_STATUS_FILE} 
     
