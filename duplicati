@@ -211,6 +211,8 @@ exit_duplicati () {
             STATUS="NOT successful [instance was killed]" ;;
         5)
             STATUS="NOT successful [instance was already running]" ;;
+        100)
+            STATUS="NOT successful [repair required]" ;;
         *)
             STATUS="NOT successful" ;;
     esac
