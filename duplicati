@@ -196,48 +196,48 @@ help () {
 # $3 Backup job name, optional
 exit_duplicati () {
     STATUS=""
-    JOB_FUNC= "$2 "
-    JOB_NAME=$3
+    JOB_FUNC="$2"
+    JOB_NAME="$3"
     JOB_TIME="$(date +'%Y-%m-%d_%H:%M:%S')"
  
     case "$1" in
         0)
-            STATUS="${JOB_FUNC}successful" ;;
+            STATUS="${JOB_FUNC} successful" ;;
         1)
-            STATUS="${JOB_FUNC}successful [no files were changed]" ;;
+            STATUS="${JOB_FUNC} successful [no files were changed]" ;;
         2)
-            STATUS="${JOB_FUNC}successful [with warnings]" ;;
+            STATUS="${JOB_FUNC} successful [with warnings]" ;;
         3)
-            STATUS="${JOB_FUNC}NOT successful [wrong syntax]" ;;
+            STATUS="${JOB_FUNC} NOT successful [wrong syntax]" ;;
         4)
-            STATUS="${JOB_FUNC}NOT successful [instance was killed]" ;;
+            STATUS="${JOB_FUNC} NOT successful [instance was killed]" ;;
         5)
-            STATUS="${JOB_FUNC}NOT successful [instance was already running]" ;;
+            STATUS="${JOB_FUNC} NOT successful [instance was already running]" ;;
         100)
-            STATUS="${JOB_FUNC}NOT successful [repair required]" ;;
+            STATUS="${JOB_FUNC} NOT successful [repair required]" ;;
         *)
-            STATUS="${JOB_FUNC}NOT successful" ;;
+            STATUS="${JOB_FUNC} NOT successful" ;;
     esac
 
     if [ -z $JOB_NAME ] ; then
-        THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.log"
+        # Write to log
+        echo "${JOB_TIME}: Duplicati finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.log"
     else
-        THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
-    fi
+        # Write to log
+        echo "${JOB_TIME}: Job \"${JOB_NAME}\" finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
 
-    # Write to log
-    echo "${JOB_TIME}: Job \"${JOB_FUNC}${JOB_NAME}\" finished ${STATUS}" >> ${THIS_LOG_PATH}
+        # Modify status file unless status code is 3 or 5
+        if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
 
-    # Modify status file unless status code is 3 or 5
-    if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] && [ ! -z $JOB_NAME ] ; then
-        touch ${BACKUP_STATUS_FILE}
-        chmod ugo+rw ${BACKUP_STATUS_FILE} 
+            touch ${BACKUP_STATUS_FILE}
+            chmod ugo+rw ${BACKUP_STATUS_FILE} 
     
-        # 1) Delete earlier status of this job
-        sed -i '/^\(+\|-\)'" ${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
+            # 1) Delete earlier status of this job
+            sed -i '/^\(+\|-\)'" ${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
     
-        # 2) Add new status
-        echo "+ ${JOB_NAME} ${JOB_TIME} ${STATUS} {Code: $1}" >> ${BACKUP_STATUS_FILE}
+            # 2) Add new status
+            echo "+ ${JOB_NAME} ${JOB_TIME} ${STATUS} {Code: $1}" >> ${BACKUP_STATUS_FILE}
+        fi
     fi 
     
     exit $1
