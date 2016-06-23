@@ -1,0 +1,33 @@
+source /opt/duplicati_helper/duplicati.conf
+# Completion for duplicati
+#   duplicati repair <backup name>
+#   duplicati backup <backup name>
+#   duplicati kill <backup name>
+#   duplicati server
+#   duplicati usage
+#   duplicati status
+#   duplicati command
+#   duplicati help
+
+_duplicati() 
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="repair backup kill server usage status command help"
+
+    if ( [ "${prev}" = "backup" ] || [ "${prev}" = "repair" ] || [ "${prev}" = "kill" ] ) ; then
+        opts=""
+        while read -r name path pas excl ; do
+            if [[ $name == \#* ]] ; then
+                continue
+            else
+                opts="${opts} ${name}"
+            fi
+        done < "${BACKUP_CONFIG}"
+    fi
+
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+}
+complete -F _duplicati duplicati
