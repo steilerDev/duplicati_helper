@@ -20,7 +20,7 @@ Command | Functionality
 `duplicati command <duplicati arguments>` | Invokes the duplicati CLI with the provided arguments.
 
 ### duplicati.conf
-This file contains the basic configuration of duplicati. The default path is `/opt/duplicati_helper/duplicati.conf`. In case you want to change the location of this file, you need to modify `duplicati`, `duplicatirc`, `duplicati_completion` and `shutdown`, as described in the intallation instructions below (bullet point 7). An example configuration with all required properties is provided within this repository (`duplicati.conf.example`).
+This file contains the basic configuration of duplicati. The default path is `/opt/duplicati_helper/duplicati.conf`. In case you want to change the location of this file, you need to modify `duplicati`, `duplicatirc`, `duplicati_completion` and `shutdown`, as described in the intallation instructions below (bullet point 8). An example configuration with all required properties is provided within this repository (`duplicati.conf.example`).
 
 ### backup.conf
 This file contains the configuration of your backup jobs. It contains the backup's password. The password or name are not allowed to contain white spaces. Make sure you restrict the access rights to the user who is executing the backups. In case you want to change the location of the file (default: `/op/duplicati_helper/backup.conf`) you need to modify `duplicati.conf`'s `BACKUP_CONFIG` value. An example configuration is provided within this repository (`backup.conf.example`).  
@@ -43,6 +43,6 @@ This script is a drop-in replacement for the shutdown procedure, checking if the
   * Make sure the access rights to `/opt/duplicati_helper/shutdown` match `/sbin/shutdown-bin`
 4. In order to show the backup status during log-in on the console, include `source /opt/duplicati_helper/duplicatirc` in your `~/.bashrc` (or similiar depending on your bash)
 5. In case your system supports bash autocompletion and you want to use this feature for the duplicati script link the provided script to the auto completion directory: `ln -s /opt/duplicati_helper/duplicati_completion /etc/bash_completion.d/` (NOTE: Check if the linking was successfull using `. /etc/bash)completion`. You might be prompted an error, saying that there are to many levels of linkage. Just remove the link and re-link it again, this fixed it on my systems)
-5. Configure your general duplicati settings based on the provided example in `/opt/duplicati_helper/duplicati.conf.example`
-6. Configure your backups based on the provided example in `/opt/duplicati_helper/backup.conf.example`
-7. In order for the helper scripts to use your `duplicati.conf` file, you either need to move it to `/opt/duplicati_helper/duplicati.conf`, or you need to modify the second line (`source /opt/duplicati_helper/duplicati.conf`) of `duplicatirc`, `duplicati` and `shutdown`, pointing to your configuration path.
+6. Configure your general duplicati settings based on the provided example in `/opt/duplicati_helper/duplicati.conf.example`
+7. Configure your backups based on the provided example in `/opt/duplicati_helper/backup.conf.example`
+8. In order for the helper scripts to use your `duplicati.conf` file, you either need to move it to `/opt/duplicati_helper/duplicati.conf`, or you need to modify the second line (`source /opt/duplicati_helper/duplicati.conf`) of `duplicatirc`, `duplicati`, `duplicati_completion` and `shutdown`, pointing to your configuration path.
