@@ -93,6 +93,7 @@ run_duplicati () {
 
     # 5) Set log settings
     THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
+    THIS_CLI_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.cli.log"
     DUPLICATI_ARG="${DUPLICATI_ARG} --log-file=\"${THIS_LOG_PATH}\" --log-level=\"${LOG_LEVEL}\""
 
     # 6) Add fixed parameters
@@ -105,7 +106,8 @@ run_duplicati () {
     QUIET=""
     if [ "$3" = "quiet" ] ; then
         DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true"
-#        QUIET=">> ${THIS_LOG_PATH} 2>&1"
+        # Workaround, since --quet-console is currently not working
+        QUIET="$QUIET >> ${THIS_CLI_LOG_PATH} 2>&1"
     fi
 
     # Running command
