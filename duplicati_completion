@@ -11,23 +11,32 @@ source /opt/duplicati_helper/duplicati.conf
 
 _duplicati() 
 {
-    local cur prev opts
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="repair backup kill server usage status command help"
-
-    if ( [ "${prev}" = "backup" ] || [ "${prev}" = "repair" ] || [ "${prev}" = "kill" ] ) ; then
-        opts=""
-        while read -r name path pas excl ; do
-            if [[ $name == \#* ]] ; then
-                continue
-            else
-                opts="${opts} ${name}"
-            fi
-        done < "${BACKUP_CONFIG}"
+    # The current duplicati script only takes 3 arguments that will be auto completed
+    if [ "${#COMP_WORDS[*]}" -lt 4 ] ; then
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+   
+        # The first argument is one of the modifiers 
+        if [ "${#COMP_WORDS[*]}" = "2" ] ; then
+            opts="repair backup kill server usage status command help"
+        # the second argument is a backup name (in case the modifiers requires it)
+        elif ( [ "${#COMP_WORDS[*]}" = "3" ] && ( [ "${prev}" = "backup" ] || [ "${prev}" = "repair" ] || [ "${prev}" = "kill" ] )) ; then
+            opts=""
+            # Read the configuration file and add the backup names to the options
+            while read -r name path pas excl ; do
+                if [[ $name == \#* ]] ; then
+                    continue
+                else
+                    opts="${opts} ${name}"
+                fi
+            done < "${BACKUP_CONFIG}"
+        else
+            opts=""
+        fi
+        
+        # Show fitting options
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
     fi
-
-    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 }
 complete -F _duplicati duplicati

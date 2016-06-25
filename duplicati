@@ -130,7 +130,7 @@ kill_duplicati () {
             rm -f ${THIS_DUPLICATI_PID}
         fi
 
-        exit_duplicati 4 "kill" $1
+        exit_duplicati 4 "job" $1
     else
         # Duplicati is not running, can't kill it
             echo "Duplicati not running"
