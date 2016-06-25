@@ -13,24 +13,32 @@ _duplicati()
 {
     COMPREPLY=()
     # The current duplicati script only takes 3 arguments that will be auto completed
-    if [ "${#COMP_WORDS[*]}" -lt 4 ] ; then
+    if [ "${#COMP_WORDS[*]}" -lt 5 ] ; then
         cur="${COMP_WORDS[COMP_CWORD]}"
-        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        # The modifier is always the second argument
+        mod="${COMP_WORDS[1]}"
+        # The backup name is always the third argument
+        backup="${COMP_WORDS[2]}"
    
         # The first argument is one of the modifiers 
         if [ "${#COMP_WORDS[*]}" = "2" ] ; then
             opts="repair backup kill server usage status command help"
         # the second argument is a backup name (in case the modifiers requires it)
-        elif ( [ "${#COMP_WORDS[*]}" = "3" ] && ( [ "${prev}" = "backup" ] || [ "${prev}" = "repair" ] || [ "${prev}" = "kill" ] )) ; then
+        elif ( [ "${#COMP_WORDS[*]}" -gt 2 ] && ( [ "${mod}" = "backup" ] || [ "${mod}" = "repair" ] || [ "${mod}" = "kill" ] )) ; then
             opts=""
-            # Read the configuration file and add the backup names to the options
-            while read -r name path pas excl ; do
-                if [[ $name == \#* ]] ; then
-                    continue
-                else
-                    opts="${opts} ${name}"
-                fi
-            done < "${BACKUP_CONFIG}"
+
+            if [ "${#COMP_WORDS[*]}" = "3" ] ; then
+                # Read the configuration file and add the backup names to the options
+                while read -r name path pas excl ; do
+                    if [[ $name == \#* ]] ; then
+                        continue
+                    else
+                        opts="${opts} ${name}"
+                    fi
+                done < "${BACKUP_CONFIG}"
+            elif ( [ "${#COMP_WORDS[*]}" = "4" ] && [ "${mod}" != "kill" ] ) ; then
+                opts="quiet"
+            fi
         else
             opts=""
         fi
