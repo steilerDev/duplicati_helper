@@ -21,8 +21,7 @@ main () {
             duplicati_usage
     elif [ "$1" = "status" ] ; then
         ## Show the status, displayed 
-            source $DUPLICATIRC
-            exit_duplicati 1 "status"
+            duplicati_status $2
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
@@ -140,6 +139,7 @@ kill_duplicati () {
     fi
 }
 
+# Shows the usage of all running duplicati jobs using top
 duplicati_usage () {
     DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
 
@@ -156,6 +156,17 @@ duplicati_usage () {
     fi
     
     exit_duplicati 1 "usage"
+}
+
+# If invoked without any arguments, showing the status summary as provided by duplicatirc.
+# If a single argument is provided, the current log output of this job is shown using tail.
+duplicati_status () {
+    if [ -z $1 ] ; then
+        source $DUPLICATIRC
+    else
+       tail -f ${LOG_PATH}${LOG_PREFIX}.$1.*  
+    fi
+    exit_duplicati 1 "status"
 }
 
 help () {
@@ -181,6 +192,8 @@ help () {
     echo "      Shows the usage of all running duplicati jobs using top"
     echo "  Status:         $0 status"
     echo "      Shows the status table, shown during log in"
+    echo "  Job status:     $0 status <backup name>"
+    echo "      Shows the live log output of the specified job, using tail"
     echo "  Duplicati:      $0 command"
     echo "      The duplicati command line interface is started with all arguments that follow 'command'"
     exit_duplicati 3 "help"

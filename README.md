@@ -17,6 +17,7 @@ Command | Functionality
 `duplicati server` | Starts the duplicati webserver, with the supplied configuration from `duplicati.conf` (see below).
 `duplicati usage` | Shows the usage of currently running backup jobs using `top`.
 `duplicati status` | Shows the output of the `duplicatirc` file (see below).
+`duplicati status <backup_config_name>` | Shows the live log output of the specified backup/repair job using `tail -f`.
 `duplicati command <duplicati arguments>` | Invokes the duplicati CLI with the provided arguments.
 
 ### duplicati.conf

@@ -24,7 +24,7 @@ _duplicati()
         if [ "${#COMP_WORDS[*]}" = "2" ] ; then
             opts="repair backup kill server usage status command help"
         # the second argument is a backup name (in case the modifiers requires it)
-        elif ( [ "${#COMP_WORDS[*]}" -gt 2 ] && ( [ "${mod}" = "backup" ] || [ "${mod}" = "repair" ] || [ "${mod}" = "kill" ] )) ; then
+        elif ( [ "${#COMP_WORDS[*]}" -gt 2 ] && ( [ "${mod}" = "backup" ] || [ "${mod}" = "repair" ] || [ "${mod}" = "kill" ] || [ "${mod}" = "status" ] )) ; then
             opts=""
 
             if [ "${#COMP_WORDS[*]}" = "3" ] ; then
@@ -36,7 +36,7 @@ _duplicati()
                         opts="${opts} ${name}"
                     fi
                 done < "${BACKUP_CONFIG}"
-            elif ( [ "${#COMP_WORDS[*]}" = "4" ] && [ "${mod}" != "kill" ] ) ; then
+            elif ( [ "${#COMP_WORDS[*]}" = "4" ] && ( [ "${mod}" != "kill" ] || [ "${mod}" != "status" ] )) ; then
                 opts="quiet"
             fi
         else
