@@ -29,13 +29,15 @@ _duplicati()
 
             if [ "${#COMP_WORDS[*]}" = "3" ] ; then
                 # Read the configuration file and add the backup names to the options
-                while read -r name path pas excl ; do
-                    if [[ $name == \#* ]] ; then
-                        continue
-                    else
-                        opts="${opts} ${name}"
-                    fi
-                done < "${BACKUP_CONFIG}"
+                if [[ -r "${BACKUP_CONFIG}" && -f "${BACKUP_CONFIG}" ]]; then
+                    while read -r name path pas excl ; do
+                        if [[ $name == \#* ]] ; then
+                            continue
+                        else
+                            opts="${opts} ${name}"
+                        fi
+                    done < "${BACKUP_CONFIG}"
+                fi
             elif ( [ "${#COMP_WORDS[*]}" = "4" ] && ( [ "${mod}" != "kill" ] || [ "${mod}" != "status" ] )) ; then
                 opts="quiet"
             fi
