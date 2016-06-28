@@ -49,6 +49,7 @@ PID_DIR="/run/"
 ## The prefix every duplicati job PID file will get. The following schema will be used: prefix.backupName.pid
 DUPLICATI_PID_PREFIX="duplicati"
 ## The name of the shutdown postponing script's PID
+## NOTE: This should not be the same, or start the same as DUPLICATI_PID_PREFIX, otherwise the shutdown script will wait on itself
 SHUTDOWN_PID_PREFIX="shutdown"
 ## The path to the original shutdown binary
 SHUTDOWN_BIN="/sbin/shutdown-bin"
