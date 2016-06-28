@@ -2,7 +2,7 @@
 source /opt/duplicati_helper/duplicati.conf
 # This script checks if a backup is currently running and will postpone the shutdown
 # Using -c, a previous shutdown is cancelled
-# Using -r, a reboot is performed, as soon as the backup job is finished
+# If using other command line arguments, those will be handed over to the shutdown binary after all duplicati jobs have finished
 # Using /sbin/shutdown-bin a shutdown can be forced
 
 DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
@@ -29,11 +29,4 @@ if ls $DUPLICATI_PID 1> /dev/null 2>&1 ; then
     done
 fi
 
-if [ "$1" = "-r" ] ; then
-    $SHUTDOWN_BIN -r now
-else
-    $SHUTDOWN_BIN -h now
-fi
-
-
-
+$SHUTDOWN_BIN $@
