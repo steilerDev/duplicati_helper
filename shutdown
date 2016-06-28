@@ -3,30 +3,42 @@ source /opt/duplicati_helper/duplicati.conf
 # This script checks if a backup is currently running and will postpone the shutdown
 # Using -c, a previous shutdown is cancelled
 # If using other command line arguments, those will be handed over to the shutdown binary after all duplicati jobs have finished
-# Using /sbin/shutdown-bin a shutdown can be forced
+# Using '/sbin/shutdown-bin' a shutdown can be forced
 
-DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
-SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
+main () {
+    DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
+    SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
 
-# Shutdown scheduled
-if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
-    if [ "$1" = "-c" ] ; then
-        kill -9 $(cat $SHUTDOWN_PID)
-        exit 0
-    else
-        echo "Shutdown is allready waiting for backup to finish"
-        exit 0
+    # Shutdown scheduled
+    if [ -e $SHUTDOWN_PID ] ;  then
+        if ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
+            if [ "$1" = "-c" ] ; then
+                kill -9 $(cat $SHUTDOWN_PID)
+                rm $SHUTDOWN_PID
+                exit 0
+            else
+                echo "Shutdown is allready waiting for backup to finish"
+                exit 0
+            fi
+        else
+            rm $SHUTDOWN_PID
+        fi
     fi
-fi
 
-# Duplicati running
-if ls $DUPLICATI_PID 1> /dev/null 2>&1 ; then
-    $SHUTDOWN_BIN -k now ": ### Not shutting down yet, because backup job is running. Waiting for it to finish and shutting down afterwards ###)"
-    echo "Not shutting down yet, because backup job is running. Waiting for it to finish and shutting down afterwards"
-    echo $$ > $SHUTDOWN_PID
+    # Duplicati running
+    if ls $DUPLICATI_PID 1> /dev/null 2>&1 ; then
+        $SHUTDOWN_BIN -k now ": ### Delaying shutdown, until all backup jobs are finished ###)"
+        echo "Delaying shutdown, until all backup jobs are finished"
+        wait_for_shutdown $@ & echo $! > $SHUTDOWN_PID
+    fi
+}
+
+wait_for_shutdown () {
     while ls $DUPLICATI_PID 1> /dev/null 2>&1 ; do
         sleep 20
     done
-fi
+    $SHUTDOWN_BIN $@
+}
 
-$SHUTDOWN_BIN $@
+main $@
+exit 0
