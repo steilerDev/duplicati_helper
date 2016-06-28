@@ -65,9 +65,14 @@ run_duplicati () {
     THIS_DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.${name}.pid"
 
     if [ -e ${THIS_DUPLICATI_PID} ] ; then
-        ## If duplicati is currently performing a backup you can't start another one
+        if ps -p $(cat $THIS_DUPLICATI_PID) > /dev/null ; then
+            ## If duplicati is currently performing a backup you can't start another one
             echo "Duplicati already running"
             exit_duplicati 5 $1 ${name}
+        else
+            ## If there is a PID file, but no running process delete the pid file
+            rm $THIS_DUPLICATI_PID
+        fi
     fi
 
     # Building arguments
@@ -102,19 +107,18 @@ run_duplicati () {
     DUPLICATI_ARG="${DUPLICATI_ARG} ${excl}"
 
     # 8) Check if quite flag is set
-    QUIET=""
-    if [ "$3" = "quiet" ] ; then
-        DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true"
+#    if [ "$3" = "quiet" ] ; then
         # Workaround, since --quet-console is currently not working
-        QUIET="$QUIET >> ${THIS_CLI_LOG_PATH} 2>&1"
-    fi
+#        DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true >> ${THIS_CLI_LOG_PATH} 2>&1"
+#    fi
 
     # Running command
-    ${DUPLICATI} ${DUPLICATI_ARG} ${QUIET} & echo $! > ${THIS_DUPLICATI_PID}
+    ${DUPLICATI} ${DUPLICATI_ARG} & echo $! > ${THIS_DUPLICATI_PID}
     wait $(cat ${THIS_DUPLICATI_PID}) 
     success=$?
    
     rm ${THIS_DUPLICATI_PID}
+    exit
     exit_duplicati $success $1 ${name}
 }
 
