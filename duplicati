@@ -267,6 +267,7 @@ exit_duplicati () {
 }
 
 # This function exchanges file descriptors of running processes using gdb, this is a workaround, since standard relaying (using <<) does not seem to work with duplicati.
+# This script is based on a script by Robert McKay and modified by Ingvar Hagelund 
 # $1 The PID of the process
 # $2 The log file
 fdswap () {
