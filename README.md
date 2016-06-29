@@ -12,7 +12,7 @@ This script is simplifying the interface to duplicati, by introducing a configua
 Command | Functionality 
 --- | --- 
 `duplicati help` | Shows a full list of available commands and configured backups.
-`duplicati {backup | repair} <backup_config_name>` | Starts the backup/repair of a pre-configured backup job. The backup will be put into a subfolder on your cloud provider with the configured backup name, the log will be written to the configured log directory with the name `duplicati.<backup_config_name>.log`. The backup is defined within `backup.conf` (see below). Optionally the backup name can be followed by the argument `quiet`, relaying all output to the log file (functionality not fully working, since [duplicati has a bug there](https://github.com/duplicati/duplicati/issues/1752). A workaround is in place, that should relay all CLI output, that is not supressed to `duplicati.<backup_config_name>.cli.log`.
+`duplicati {backup | repair} <backup_config_name>` | Starts the backup/repair of a pre-configured backup job. The backup will be put into a subfolder on your cloud provider with the configured backup name, the log will be written to the configured log directory with the name `duplicati.<backup_config_name>.log`. The backup is defined within `backup.conf` (see below). Optionally the backup name can be followed by the argument `quiet`, relaying all output to the log file (functionality not fully working, since [duplicati has a bug there](https://github.com/duplicati/duplicati/issues/1752). A workaround is in place, that should relay all CLI output, that is not supressed to `duplicati.<backup_config_name>.cli.log`. For this workaround to work you need gdb installed and the executing user needs to be root.
 `duplicati kill <backup_config_name>` | Kills a running backup job with the supplied name
 `duplicati server` | Starts the duplicati webserver, with the supplied configuration from `duplicati.conf` (see below).
 `duplicati usage` | Shows the usage of currently running backup jobs using `top`.
@@ -38,6 +38,7 @@ This script is a drop-in replacement for the shutdown procedure, checking if the
 # Installation
 1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
 2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
+  * If you want to use the `quiet` workaround you need to install `gdb`
 3. In case you want a shutdown delayed by running duplicati jobs, do the following:
   * `mv /sbin/shutdown /sbin/shutdown-bin`
   * `ln -s /opt/duplicati_helper/shutdown`

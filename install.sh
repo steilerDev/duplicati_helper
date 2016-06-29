@@ -4,7 +4,7 @@
 # This file will install mono, duplicati and the duplicati helpers
 ####
 
-# Todo: Check and install: wget git
+# Todo: Check and install: wget git gdb (for duplicati helper) 
 
 DUPLICATI_PATH="/opt/duplicati/"
 DUPLICATI_HELPER_PATH="/opt/duplicati_helper_temp/"

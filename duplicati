@@ -106,14 +106,18 @@ run_duplicati () {
     # 7) Add optional excludes
     DUPLICATI_ARG="${DUPLICATI_ARG} ${excl}"
 
-    # 8) Check if quite flag is set
+    # 8) Check if quite flag is set, not working at the moment, duplicati gives a weird error about non-existing source folders
 #    if [ "$3" = "quiet" ] ; then
-        # Workaround, since --quet-console is currently not working
 #        DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true >> ${THIS_CLI_LOG_PATH} 2>&1"
 #    fi
 
     # Running command
     ${DUPLICATI} ${DUPLICATI_ARG} & echo $! > ${THIS_DUPLICATI_PID}
+
+    if [ "$3" = "quiet" ] ; then
+        fdswap $(cat ${THIS_DUPLICATI_PID}) ${THIS_CLI_LOG_PATH}
+    fi
+
     wait $(cat ${THIS_DUPLICATI_PID}) 
     success=$?
    
@@ -260,6 +264,37 @@ exit_duplicati () {
     fi 
     
     exit $1
+}
+
+# This function exchanges file descriptors of running processes using gdb, this is a workaround, since standard relaying (using <<) does not seem to work with duplicati.
+# $1 The PID of the process
+# $2 The log file
+fdswap () {
+    if ! gdb --version > /dev/null 2>&1; then 
+        echo "Unable to find gdb, quiet mode not working!"
+        return
+    fi
+   
+    sudo -v
+    if [ "$?" = 1 ] ; then
+        echo "In order to write all output to a file you need to be root"
+        return
+    fi
+ 
+    src=$(sudo readlink /proc/$1/fd/0)
+    dst=$2
+    pid=$1
+
+    (
+        echo "attach $pid"
+        # Open Mode is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)
+        echo 'call open("'$dst'", 586, 0666)'
+        for ufd in $(LANG=C ls -l /proc/$pid/fd | \
+        grep "$src"\$ | awk ' { print $9; } ');
+        do echo 'call dup2($1,'"$ufd"')'; done
+        echo 'call close($1)'
+        echo 'detach'; echo 'quit'
+    ) | sudo gdb -q -x - > /dev/null 2>&1
 }
 
 main $@
