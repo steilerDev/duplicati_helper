@@ -120,9 +120,8 @@ run_duplicati () {
 
     wait $(cat ${THIS_DUPLICATI_PID}) 
     success=$?
-   
     rm ${THIS_DUPLICATI_PID}
-    exit
+
     exit_duplicati $success $1 ${name}
 }
 
