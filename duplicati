@@ -286,6 +286,7 @@ fdswap () {
     dst=$2
     pid=$1
 
+    touch $dst
     (
         echo "attach $pid"
         # Open Mode is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)

@@ -38,7 +38,7 @@ This script is a drop-in replacement for the shutdown procedure, checking if the
 # Installation
 1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
 2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
-  * If you want to use the `quiet` workaround you need to install `gdb`
+  * If you want to use the `quiet` workaround you need to install `gdb` and mono needs to have version 4.3.2.467, 4.4.x, or higher
 3. In case you want a shutdown delayed by running duplicati jobs, do the following:
   * `mv /sbin/shutdown /sbin/shutdown-bin`
   * `ln -s /opt/duplicati_helper/shutdown`
