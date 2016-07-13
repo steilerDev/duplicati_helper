@@ -280,8 +280,7 @@ fdswap () {
         echo "In order to write all output to a file you need to be root"
         return
     fi
- 
-    src=$(sudo readlink /proc/$1/fd/0)
+    
     dst=$2
     pid=$1
 
@@ -290,11 +289,14 @@ fdswap () {
         echo "attach $pid"
         # Open Mode is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)
         echo 'call open("'$dst'", 586, 0666)'
-        for ufd in $(LANG=C ls -l /proc/$pid/fd | \
-        grep "$src"\$ | awk ' { print $9; } ');
-        do echo 'call dup2($1,'"$ufd"')'; done
+        # Switch stdout
+        echo 'call dup2($1,1)'
+        # Switch stderr
+        echo 'call dup2($1,2)'
+        # Close file
         echo 'call close($1)'
-        echo 'detach'; echo 'quit'
+        echo 'detach' 
+        echo 'quit'
     ) | sudo gdb -q -x - > /dev/null 2>&1
 }
 
