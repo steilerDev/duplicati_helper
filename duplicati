@@ -195,11 +195,11 @@ update_helper () {
         REMOTE=$(git rev-parse @{u})
 
         if [ $LOCAL != $REMOTE ]; then
-            echo -n "\nUpdating duplicati_helper and restarting command..."
+            echo -n "updates available, installing and restarting command..."
             git pull > /dev/null 2> /dev/null
             cd $CURRENT_DIR
-            exec $0 $@
             echo "done"
+            exec $0 $@
             exit
         else
             echo "no update available"
