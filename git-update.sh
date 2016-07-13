@@ -4,7 +4,7 @@
 CURRENT_DIR=$(pwd)
 GIT_DIR=$(dirname $(readlink -f $0))
 
-echo "Updated!"
+echo "Not Updated!"
 echo "current dir: $CURRENT_DIR"
 echo "git dir: $GIT_DIR"
 echo "Arguments: $0 $@"
@@ -12,14 +12,14 @@ echo "Arguments: $0 $@"
 cd $GIT_DIR
 
 echo "Checking for duplicati_helper updates..."
-git remote update > /dev/null
+git remote update > /dev/null 2> /dev/null
 if [ $? -eq 0 ]; then
     LOCAL=$(git rev-parse @{0})
     REMOTE=$(git rev-parse @{u})
 
     if [ $LOCAL != $REMOTE ]; then
         echo "Updating duplicati_helper and restarting command..."
-        git pull
+        git pull > /dev/null 2> /dev/null
         cd $CURRENT_DIR
         exec $0 $@
         echo "...done"
