@@ -12,7 +12,7 @@ cd $GIT_DIR
 echo "Checking for duplicati_helper updates..."
 git remote update > /dev/null
 if [ $? -eq 0 ]; then
-    LOCAL=$(git rev-parse @)
+    LOCAL=$(git rev-parse @{0})
     REMOTE=$(git rev-parse @{u})
 
     if [ $LOCAL != $REMOTE ]; then
