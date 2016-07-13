@@ -1,13 +1,16 @@
 #!/bin/bash
 source /opt/duplicati_helper/duplicati.conf
 
-
 ####
 # This file is intended to give a more natural interface to the duplicati command
 # line interface, simplifying automated backups.
 ####
 
 main () { 
+    if [ "$HELPER_AUTO_UPDATE" = "true" ] ; then
+        update_helper $@
+    fi
+
     if [ "$1" = "command" ] ; then
         ## Run duplicati with the provided arguments
             shift
@@ -175,6 +178,41 @@ duplicati_status () {
        tail -f ${LOG_PATH}${LOG_PREFIX}.$1.*  
     fi
     exit_duplicati 1 "status"
+}
+
+# This function checks if there is an update available for the helper and installs the update
+# Arguments: The arguments of the initial run 
+update_helper () {
+    CURRENT_DIR=$(pwd)
+    GIT_DIR=$(dirname $(readlink -f $0))
+
+    if [ "${@: -1}" = "quiet" ] ;
+        QUIET=">> ${LOG_PATH}${LOG_PREFIX}.${2}.cli.log" 
+    fi
+
+    cd $GIT_DIR
+
+    echo "Checking for duplicati_helper updates..." $QUIET
+    git remote update > /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+        LOCAL=$(git rev-parse @{0})
+        REMOTE=$(git rev-parse @{u})
+
+        if [ $LOCAL != $REMOTE ]; then
+            echo "Updating duplicati_helper and restarting command..." $QUIET
+            git pull > /dev/null 2> /dev/null
+            cd $CURRENT_DIR
+            exec $0 $@
+            echo "...done" $QUIET
+            exit
+        else
+            echo "...no update available" $QUIET
+        fi
+    else
+        echo "...unable to get update, try again later" $QUIET
+    fi
+
+    cd $CURRENT_DIR
 }
 
 help () {

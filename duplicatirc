@@ -7,7 +7,7 @@ source /opt/duplicati_helper/duplicati.conf
 ####
 
 # Set duplicati update policy
-export AUTOUPDATER_Duplicati_POLICY=$UPDATE_POLICY
+export AUTOUPDATER_Duplicati_POLICY=$DUPLICATI_UPDATE_POLICY
 
 DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
 SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
