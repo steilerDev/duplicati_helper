@@ -1,7 +1,6 @@
 #!/bin/bash
 source /opt/duplicati_helper/duplicati.conf
 
-
 ####
 # This file is intended to give a more natural interface to the duplicati command
 # line interface, simplifying automated backups.
