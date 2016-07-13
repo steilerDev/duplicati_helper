@@ -8,6 +8,7 @@ echo "Not Updated!"
 echo "current dir: $CURRENT_DIR"
 echo "git dir: $GIT_DIR"
 echo "Arguments: $0 $@"
+echo "PID: $$"
 
 cd $GIT_DIR
 
