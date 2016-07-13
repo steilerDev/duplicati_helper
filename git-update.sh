@@ -4,7 +4,7 @@
 CURRENT_DIR=$(pwd)
 GIT_DIR=$(dirname $(readlink -f $0))
 
-echo "Not updated!"
+echo "Updated!"
 echo "current dir: $CURRENT_DIR"
 echo "git dir: $GIT_DIR"
 echo "Arguments: $0 $@"
