@@ -159,6 +159,11 @@ install_duplicati_helper () {
     fi
     echo
 
+    echo -n "Duplicating config files from templates..."
+    cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
+    cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
+    echo "Done"
+
     echo -n "Fixing -eventually broken- references to config file..."
     for f in duplicati duplicatirc duplicati_completion shutdown; do
         sudo sed -i '/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
