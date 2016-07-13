@@ -1,11 +1,13 @@
 #!/bin/bash
 
+
 CURRENT_DIR=$(pwd)
 GIT_DIR=$(dirname $(readlink -f $0))
 
 echo "Not updated!"
 echo "current dir: $CURRENT_DIR"
 echo "git dir: $GIT_DIR"
+echo "Arguments: $0 $@"
 
 cd $GIT_DIR
 
@@ -19,7 +21,7 @@ if [ $? -eq 0 ]; then
         echo "Updating duplicati_helper and restarting command..."
         git pull
         cd $CURRENT_DIR
-        exec $@
+        exec $0 $@
         echo "...done"
         exit
     else
