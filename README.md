@@ -36,6 +36,14 @@ This script is intended to give a summary of every backup job's current status u
 This script is a drop-in replacement for the shutdown procedure, checking if there are any running duplicati jobs and postponing the shutdown until all jobs finished. Upon calling `shutdown` it will notify all open terminals, that a shutdown is scheduled, but delayed. A scheduled shutdown can be canceled using `shutdown -c`. In case a shutdown is scheduled, `duplicatirc` will display that information.
 
 # Installation
+## Automatic installation (beta)
+You can use the installation script provided, to install mono, duplicati and the duplicati helper scripts, as well as configure everything.
+*DISCLAIMER*: I only tested this under Debian 7 and 8.
+The following command will download and execute the install script that will do all the work for you: `wget https://raw.githubusercontent.com/steilerDev/duplicati_helper/master/install.sh && chmod +x install.sh && ./install.sh && rm install.sh`
+
+## Manual installation
+In case the automatic installation does not work, or you don't trust my script, first install mono and duplicati according to the provided docs. My script should work within any shell. Currently the quiet mode only works if you have `gdb` installed.
+
 1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
 2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
   * If you want to use the `quiet` workaround you need to install `gdb` and mono needs to have version 4.3.2.467, 4.4.x, or higher
