@@ -11,8 +11,19 @@ DUPLICATI_HELPER_PATH="/opt/duplicati_helper_temp/"
 
 main () {
     echo "Welcome to the installer for mono, duplicati and the duplicati helpers!"
-    echo "You need to be sudo to perform this installation"
 
+    check_root 
+    #check_dependencies
+  
+    #yes_no "Do you want to install the latest mono version?" 1 "install_mono" 
+    #yes_no "Do you want to install duplicati?" 1 "install_duplicati"
+    #yes_no "Do you want to install duplicati helper scripts?" 1 "install_duplicati_helper"
+    #yes_no "Do you want to configure your duplicati helper scripts?" 1 "config_duplicati_helper"
+}
+
+# This function checks if the current user has sudo rights
+check_root () {
+    echo "You need to be sudo to perform this installation"
     echo "Checking for root..."
     while true ; do
         sudo -v
@@ -20,25 +31,44 @@ main () {
             break
         fi
     done
-    echo "... Passed"
-   
-    #yes_no "Do you want to install the latest mono version?" 1 "install_mono" 
-    #yes_no "Do you want to install duplicati?" 1 "install_duplicati"
-    #yes_no "Do you want to install duplicati helper scripts?" 1 "install_duplicati_helper"
-    yes_no "Do you want to configure your duplicati helper scripts?" 1 "config_duplicati_helper"
+    echo "...Passed"
+    echo
+}
+
+check_dependencies () {
+    echo "Updating apt-get..."
+    sudo apt-get update > /dev/null
+    echo "...Done"
+    echo
+    echo "Checking dependencies..."
+    MISSING_DEP=""
+    for dep in wget git gdb
+    do
+        if ! which $dep > /dev/null ; then
+            echo "$dep not installed!"
+            MISSING_DEP="$MISSING_DEP $dep"
+        fi
+    done
+    if [ ! -z "$MISSING_DEP" ] ; then
+        echo "Installing missing dependencies using apt-get..."
+        sudo apt-get -y install $MISSING_DEP > /dev/null
+        echo "...Done"
+    else
+        echo "All dependencies installed!"    
+    fi
+    echo
 }
 
 # This function installs the mono library, required to execute the application
 install_mono () {
-    echo "Adding mono to your apt sources..."
+    echo -n "Adding mono to your apt sources..."
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
     echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
-    echo "...Done"
+    echo "Done"
     echo
 
     echo "Installing mono with apt-get..."
-    sudo apt-get update
-    sudo apt-get install -y mono-complete
+    sudo apt-get install -y mono-complete > /dev/null
     echo "...Done"
     echo
 }
@@ -51,20 +81,20 @@ install_duplicati () {
     cd $DUPLICATI_PATH
     echo
     
-    echo "Getting URL for latest Duplicati release..."
+    echo -n "Getting URL for latest Duplicati release..."
     DUPLICATI_URL="$(curl -s https://api.github.com/repos/duplicati/duplicati/releases | grep browser_download_url | grep -P '(?<!-signatures).zip' | head -n 1 | cut -d '"' -f 4)"
-    echo "...Done"
+    echo "Done"
     echo
 
-    echo "Getting latest Duplicati release..."
+    echo -n "Getting latest Duplicati release..."
     sudo wget $DUPLICATI_URL -O $DUPLICATI_TEMP > /dev/null 2>&1
-    echo "...Done"
+    echo "Done"
     echo 
 
-    echo "Installing latest Duplicati release..."
+    echo -n "Installing latest Duplicati release..."
     sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
     rm -rf $DUPLICATI_TEMP
-    echo "...Done"
+    echo "Done"
     echo
 }
 
@@ -73,37 +103,36 @@ install_duplicati_helper () {
     cd ${DUPLICATI_HELPER_PATH}
     echo
 
-    echo "Getting latest Duplicati Helper release..."
+    echo -n "Getting latest Duplicati Helper release..."
     sudo git clone https://github.com/steilerDev/duplicati_helper.git > /dev/null 2>&1
     cd duplicati_helper
     DUPLICATI_HELPER_PATH=$(pwd)
-    echo $DUPLICATI_HELPER_PATH
-    echo "...Done" 
+    echo "Done" 
     echo
 
     if yes_no "Do you want to install the 'duplicati' script?" 1 ; then
-        echo "Installing duplicati script..."
+        echo -n "Installing duplicati script..."
         sudo ln -s ${DUPLICATI_HELPER_PATH}/duplicati /bin/duplicati
-        echo "...Done"
+        echo "Done"
     fi
     echo
 
     if yes_no "Do you want the shutdown delayed, in case a backup job is running?" 1 ; then
-        echo "Installing shutdown script..."
+        echo -n "Installing shutdown script..."
         SHUTDOWN_BIN=$(which shutdown)
         sudo mv $SHUTDOWN_BIN ${SHUTDOWN_BIN}-bin
         sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
         sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
         sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
-        echo "...Done"
+        echo "Done"
     fi
     echo 
 
     if yes_no "Do you want to see the backup status upon login?" 1 ; then
-        echo "Adding status script to '.bashrc'..."
+        echo -n "Adding status script to '.bashrc'..."
         echo "## See the status of current and past duplicati backup jobs" >> $HOME/.bashrc
         echo "source ${DUPLICATI_HELPER_PATH}/duplicatirc" >> $HOME/.bashrc
-        echo "...Done"
+        echo "Done"
     fi
     echo
 
@@ -112,7 +141,7 @@ install_duplicati_helper () {
         if ! dpkg -s bash-completion > /dev/null 2>&1 ; then
             if yes_no "bash-completion is not installed on this system, do you want to install it?" 1; then
                 echo "Installing bash-completion..."
-                sudo apt-get install -y bash-completion
+                sudo apt-get install -y bash-completion > /dev/null
                 echo "...Done"
                 echo
             fi
@@ -130,11 +159,11 @@ install_duplicati_helper () {
     fi
     echo
 
-    echo "Fixing -eventually broken- references to config file..."
+    echo -n "Fixing -eventually broken- references to config file..."
     for f in duplicati duplicatirc duplicati_completion shutdown; do
         sudo sed -i '/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
     done
-    echo "...Done"
+    echo "Done"
 }
 
 config_duplicati_helper () {
