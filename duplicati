@@ -60,7 +60,7 @@ run_duplicati () {
     
     # If no config was found, exit
     if [ -z $name ] ; then
-        echo "No backup config fig with name $2 found!"
+        echo "No backup config with name $2 found!"
         echo
         help
     fi

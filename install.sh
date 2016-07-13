@@ -11,6 +11,7 @@ SHUTDOWN_BIN=$(which shutdown)
 
 main () {
     echo "Welcome to the installer for mono, duplicati and the duplicati helpers!"
+    echo
 
     check_root 
     check_dependencies
@@ -60,7 +61,7 @@ check_dependencies () {
         sudo apt-get -y install $MISSING_DEP > /dev/null
         echo "...Done"
     else
-        echo "All dependencies installed!"    
+        echo "...All dependencies installed!"    
     fi
     echo
 }
@@ -68,7 +69,7 @@ check_dependencies () {
 # This function installs the mono library, required to execute the application
 install_mono () {
     echo -n "Adding mono to your apt sources..."
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2> /dev/null
     echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
     echo "Done"
     echo
@@ -109,11 +110,11 @@ install_duplicati_helper () {
     cd ${DUPLICATI_HELPER_PATH}
     echo
 
-    echo -n "Getting latest Duplicati Helper release..."
-    sudo git clone https://github.com/steilerDev/duplicati_helper.git > /dev/null 2>&1
+    echo "Getting latest Duplicati Helper release..."
+    sudo git clone https://github.com/steilerDev/duplicati_helper.git > /dev/null
     cd duplicati_helper
     DUPLICATI_HELPER_PATH=$(pwd)
-    echo "Done" 
+    echo "...Done" 
     echo
 
     if yes_no "Do you want to install the 'duplicati' script?" 1 ; then
@@ -154,7 +155,7 @@ install_duplicati_helper () {
         fi 
 
         if [ -d /etc/bash_completion.d/ ] ; then
-           ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion_temp
+           ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion
         else
             echo "!!!!!!!!"
             echo "Unable to link file, '/etc/bash_completion.d' does not exist"
@@ -201,7 +202,7 @@ config_duplicati_helper () {
     # Auto configuration of some values, that might change due to installation is done now.
     set_config_value "DUPLICATI" "mono ${DUPLICATI_PATH}/Duplicati.CommandLine.exe" "This is the path to the duplicati executable"
     set_config_value "DUPLICATI_SERVER" "mono ${DUPLICATI_PATH}/Duplicati.Server.exe" "This is the path to the duplicati server executable"
-    set_config_value "BACKUP_CONF" "${DUPLICATI_HELPER_PATH}/backup.conf" "This is the path to the backup configuration file"
+    set_config_value "BACKUP_CONFIG" "${DUPLICATI_HELPER_PATH}/backup.conf" "This is the path to the backup configuration file"
     set_config_value "DUPLICATIRC" "${DUPLICATI_HELPER_PATH}/duplicatirc" "This is the path to the duplicatirc file"
     set_config_value "BACKUP_STATUS_FILE" "${DUPLICATI_HELPER_PATH}/backup.status" " This status file will hold the information about the status of previous backups. Use duplicatirc to display it at log in."
     set_config_value "SHUTDOWN_BIN" "$SHUTDOWN_BIN" "The path to the original shutdown binary"
@@ -258,15 +259,16 @@ config_duplicati_helper_item () {
 # $3 Comment for the key-value pair, in case entry did not exist yet (optional)
 # $4 Comment for the key-value pair, in case entry did not exist yet (optional)
 set_config_value () {
-    CONFIGFILE="${DUPLICATI_HELPER_PATH}/duplicati.conf.test"
+    CONFIGFILE="${DUPLICATI_HELPER_PATH}/duplicati.conf"
+    touch $CONFIGFILE
     
     if grep -q $1 $CONFIGFILE ; then
         sudo sed -i '/'"$1"'/c\'"$1"'="'"$2"'"' $CONFIGFILE
     else
-        if [ ! -z $3 ] ; then
+        if [ ! -z "$3" ] ; then
             echo "# $3" >> $CONFIGFILE
         fi
-        if [ ! -z $4 ] ; then
+        if [ ! -z "$4" ] ; then
             echo "# $4" >> $CONFIGFILE
         fi
         echo "$1=\"$2\"" >> $CONFIGFILE
