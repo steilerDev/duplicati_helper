@@ -7,10 +7,6 @@ source /opt/duplicati_helper/duplicati.conf
 ####
 
 main () { 
-    if [ "$HELPER_AUTO_UPDATE" = "true" ] ; then
-        update_helper $@
-    fi
-
     if [ "$1" = "command" ] ; then
         ## Run duplicati with the provided arguments
             shift
@@ -30,6 +26,9 @@ main () {
         ## If provided arguments do not fit, show help
             help
     elif ( [ "$1" == "repair" ] || [ "$1" == "backup" ] ) ; then
+        if [ "$HELPER_AUTO_UPDATE" = "true" ] ; then
+            update_helper $@
+        fi
         ## Backup or repair specified backup
             run_duplicati $1 $2 $3
     elif ( [ "$1" == "kill" ] ) ; then
