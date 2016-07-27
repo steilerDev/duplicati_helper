@@ -107,7 +107,16 @@ run_duplicati () {
     DUPLICATI_ARG="${DUPLICATI_ARG} --authid=\"${AUTH_ID}\" ${COMPRESSION_MODULE} ${ENCRYPTION_MODULE} ${BACKUP_MODULE}" 
 
     # 7) Add optional excludes
-    DUPLICATI_ARG="${DUPLICATI_ARG} ${excl}"
+    # Creating excludes-command line arguments from config (logic below required, since for each splits at whitespaces, even if quotes are around and we want to support pathes with whitespaces)
+    EXCL=""
+    for e in ${excl} ; do 
+        if [[ $e == \"* ]] ; then   # If the variable starts with a quote, this means that we need to add the commandline exclude statement 
+            EXCL+="--exclude=$e "
+        else                        # Otherwise, just add the variable, since exclude statement was added earlier
+            EXCL+="$e "
+        fi
+    done
+    DUPLICATI_ARG="${DUPLICATI_ARG} ${EXCL}"
 
     # 8) Check if quite flag is set, not working at the moment, duplicati gives a weird error about non-existing source folders
 #    if [ "$3" = "quiet" ] ; then
@@ -117,6 +126,7 @@ run_duplicati () {
     # Running command
     ${DUPLICATI} ${DUPLICATI_ARG} & echo $! > ${THIS_DUPLICATI_PID}
 
+    # Workaround using gdb and swapping file descriptors. See 8) for explanation of the problem
     if [ "$3" = "quiet" ] ; then
         fdswap $(cat ${THIS_DUPLICATI_PID}) ${THIS_CLI_LOG_PATH}
     fi
