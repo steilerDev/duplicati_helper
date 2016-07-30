@@ -43,8 +43,12 @@ main () {
 # $3: 'quiet', optional
 run_duplicati () {
 
+    ############################################################################
+    # Read config
+    ############################################################################
+
     # Load the correct configuration
-    while read -r name path pas excl ; do
+    while read -r name path pas LOCAL_OPTIONS ; do
         if [[ $name == \#* ]] ; then
             # Ignore lines with pound
             continue
@@ -63,8 +67,12 @@ run_duplicati () {
         echo
         help
     fi
+    
+    ############################################################################
+    # Check if job is already running 
+    ############################################################################
 
-    # Check if backup is allready running
+    # Build PID file path for this job
     THIS_DUPLICATI_PID="${PID_DIR}${DUPLICATI_PID_PREFIX}.${name}.pid"
 
     if [ -e ${THIS_DUPLICATI_PID} ] ; then
@@ -78,59 +86,111 @@ run_duplicati () {
         fi
     fi
 
-    # Building arguments
+    ############################################################################
+    # Build duplicati base command 
+    ############################################################################
 
     # 1) Remote directory
-    DUPLICATI_ARG="${BASE_URL}/${name}"
+    DUPLICATI_CMD="${BASE_URL}/${name}"
     
     # 2) Repair or backup
     if [ "$1" = "repair" ] ; then
-        DUPLICATI_ARG="repair ${DUPLICATI_ARG}"
+        DUPLICATI_CMD="repair ${DUPLICATI_CMD}"
     elif [ "$1" = "backup" ] ; then
-        DUPLICATI_ARG="backup ${DUPLICATI_ARG} ${path}"
+        DUPLICATI_CMD="backup ${DUPLICATI_CMD} ${path}"
     else
         help
     fi
 
-    # 3) Backup name and prefix
-    DUPLICATI_ARG="${DUPLICATI_ARG} --backup-name=\"${name}\" --prefix=\"${name}\""
+    # 3) Backup config from backup.conf
+    DUPLICATI_CMD+=" --backup-name=\"${name}\" --prefix=\"${name}\" --passphrase=\"${pas}\""
 
-    # 4) Set passphrase
-    DUPLICATI_ARG="${DUPLICATI_ARG} --passphrase=\"${pas}\""
+    # 4) Authentication at backend 
+    DUPLICATI_CMD+=" --authid=\"${AUTH_ID}\""
 
     # 5) Set log settings
     THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
     THIS_CLI_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.cli.log"
-    DUPLICATI_ARG="${DUPLICATI_ARG} --log-file=\"${THIS_LOG_PATH}\" --log-level=\"${LOG_LEVEL}\""
+    DUPLICATI_CMD+=" --log-file=\"${THIS_LOG_PATH}\"" 
 
-    # 6) Add fixed parameters
-    DUPLICATI_ARG="${DUPLICATI_ARG} --authid=\"${AUTH_ID}\" ${COMPRESSION_MODULE} ${ENCRYPTION_MODULE} ${BACKUP_MODULE}" 
+    ############################################################################
+    # Build duplicati options based on duplicati.conf and backup.conf 
+    ############################################################################
 
-    # 7) Add optional excludes
-    # Creating excludes-command line arguments from config (logic below required, since for each splits at whitespaces, even if quotes are around and we want to support pathes with whitespaces)
-    EXCL=""
-    for e in ${excl} ; do 
-        if [[ $e == \"* ]] ; then   # If the variable starts with a quote, this means that we need to add the commandline exclude statement 
-            EXCL+="--exclude=$e "
-        else                        # Otherwise, just add the variable, since exclude statement was added earlier
-            EXCL+="$e "
+    # This variable will hold the final options added to the call
+    FINAL_OPTIONS=""
+
+    # These are the global options from duplicati.conf
+    GLOBAL_OPTIONS="--log-level=\"${LOG_LEVEL}\" ${COMPRESSION_MODULE} ${ENCRYPTION_MODULE} ${BACKUP_MODULE}" 
+
+    # 1) LOCAL_OPTIONS (read from backup.conf) need to be scanned, correct options need to be included, exclude paths need to be surounded by --exclude="". Everything will be put into FINAL_OPTIONS
+    for OPTION in $LOCAL_OPTIONS ; do
+        if [[ $OPTION == \"* ]] ; then          # In case the option starts with a double quote, this means it is an exclude path (therefore add --exclude)
+            FINAL_OPTIONS+="--exclude=$OPTION "
+        else                                    # Otherwise, just add it to the variable
+            FINAL_OPTIONS+="$OPTION "
         fi
     done
-    DUPLICATI_ARG="${DUPLICATI_ARG} ${EXCL}"
 
-    # 8) Check if quite flag is set, not working at the moment, duplicati gives a weird error about non-existing source folders
-#    if [ "$3" = "quiet" ] ; then
-#        DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true >> ${THIS_CLI_LOG_PATH} 2>&1"
-#    fi
+    # 2) Every global option needs to be merged into seperate variables (TEMP_OPTION) and then we need to check, if this option is already part of FINAL_OPTIONS. If not add it, otherwise drop it
+    TEMP_OPTION=""
+    for OPTION in $GLOBAL_OPTIONS ; do
+        if [[ $OPTION == "--"* ]] ; then        # If the option starts with '--' we start a new token
+            TEMP_OPTION="$OPTION"
+        elif [ ! -z "$TEMP_OPTION" ] ; then     # Else, there must been an earlier entry, otherwise there is something wrong
+            TEMP_OPTION+=" $OPTION"
+        else                                    # Something is wrong
+            echo "Unexpected token in global 'duplicati.conf': $OPTION"
+            exit_duplicati 3 "$1" "${name}"
+        fi
+
+        if [[ $TEMP_OPTION != *"\"" ]] ; then   # If the current token does not finish with a double quote, we need to add more content
+            continue
+        fi
+
+        # Since we completely read the current option we now need to check if the key already exists
+        if [ ! -z "$TEMP_OPTION" ] ; then
+            # Extract the key from the current option
+            CURRENT_KEY=$(echo "$TEMP_OPTION" | grep -oP "\-\-.*\=")
+            if [[ $FINAL_OPTIONS != *"$CURRENT_KEY"* ]] ; then # Add this option only, if the final options do not already contain the key
+                FINAL_OPTIONS+=" $TEMP_OPTION"
+            fi
+            TEMP_OPTION=""
+        fi
+    done
+
+    # Now FINAL_OPTIONS should hold the correct and proper formatted options
+    
+    ############################################################################
+    # Run duplicati
+    ############################################################################
+
 
     # Running command
-    ${DUPLICATI} ${DUPLICATI_ARG} & echo $! > ${THIS_DUPLICATI_PID}
-
-    # Workaround using gdb and swapping file descriptors. See 8) for explanation of the problem
+    ${DUPLICATI} ${DUPLICATI_CMD} ${FINAL_OPTIONS} & echo $! > ${THIS_DUPLICATI_PID}
+    
+    ############################################################################
+    # Make duplicati quiet/monitor log files
+    ############################################################################
+    
+    # Workaround using gdb and swapping file descriptors
+    # 1) Duplicati's "--quiet-console" does not work at the moment (see https://github.com/duplicati/duplicati/issues/1752 for status)
+    # 2) Adding ">>" through shell scripts results into duplicati interpreting some parts wrong and complaining about non-existing source folders
+    # Currently NOT working (theoretically should work at some point and is much cleaner, therefore I will keep it here):
+    # if [ "$3" = "quiet" ] ; then
+    #     DUPLICATI_ARG="${DUPLICATI_ARG} --quiet-console=true >> ${THIS_CLI_LOG_PATH} 2>&1"
+    # fi
+    #
+    # This is a workaround function, using gdb to move the file descriptor currently pointing at stdout (or similar) to the log file
     fdswap $(cat ${THIS_DUPLICATI_PID}) ${THIS_CLI_LOG_PATH}
 
+    # This function will detach and monitor the changes made to the CLI log in order to give a rich status summary (eg. used by duplicati status, duplicatirc)
+    # In case the quiet flag is NOT set, this function will provide the output of the log file to the console
     monitor_log ${THIS_CLI_LOG_PATH} $(cat ${THIS_DUPLICATI_PID}) $3 &
     
+    ############################################################################
+    # Wait for duplicati to finish, then clean and exit
+    ############################################################################
     wait $(cat ${THIS_DUPLICATI_PID}) 
     success=$?
     rm ${THIS_DUPLICATI_PID}

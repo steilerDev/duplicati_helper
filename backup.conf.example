@@ -1,4 +1,4 @@
-# This file configures the available backups. Backup names, backup paths and passwords are not allowed to contain whitespaces. Excluding paths may contain whitespaces, but have to be enclosed with double quotes (").
+# This file configures the available backups. Backup names, backup paths and passwords are not allowed to contain whitespaces. Excluding paths may contain whitespaces, but have to be enclosed with double quotes ("). Additionally it is possible to overwrite settings from duplicati.conf (Advanced options [COMPRESSION_MODULE, ENCRYPTION MODULE, BACKUP_MODULE] and log level only), by adding the full option after the excluding paths.
 # Please choose a secure password for each backup, do not repeate passwords
-# Backup name   Backup path             Backup password                                     Excluding paths
-root            /                       Password1!                                          "/dev/" "/media/" "/proc/" "/run/" "/sys/" "/tmp/"
+# Backup name   Backup path             Backup password     Excluding paths                                         Local backup settings
+root            /                       Password1!          "/dev/" "/media/" "/proc/" "/run/" "/sys/" "/tmp/"      --snapshot-policy="off"
