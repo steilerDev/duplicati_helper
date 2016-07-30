@@ -434,7 +434,6 @@ monitor_log() {
                 # Process match
             #fi
         done
-        echo "Thank you for monitoring files with us!"
     fi
 }
 

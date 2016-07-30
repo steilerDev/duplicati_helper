@@ -23,7 +23,7 @@ main () {
     
     echo "All finished, enjoy!"
     echo
-    echo "Made by steilerDev"
+    echo "Made by steilerDev (https://github.com/steilerDev/)"
     echo "For support and information go to https://github.com/steilerdev/duplicati_helper/"
     echo "Licensed under a GNU General Public License, Version 3"
 }
