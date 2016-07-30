@@ -62,7 +62,7 @@ run_duplicati () {
     done < "${BACKUP_CONFIG}"
     
     # If no config was found, exit
-    if [ -z $name ] ; then
+    if [ -z "$name" ] ; then
         echo "No backup config with name $2 found!"
         echo
         help
@@ -186,7 +186,7 @@ run_duplicati () {
 
     # This function will detach and monitor the changes made to the CLI log in order to give a rich status summary (eg. used by duplicati status, duplicatirc)
     # In case the quiet flag is NOT set, this function will provide the output of the log file to the console
-    monitor_log ${THIS_CLI_LOG_PATH} $(cat ${THIS_DUPLICATI_PID}) $3 &
+    monitor_log ${THIS_CLI_LOG_PATH} $(cat ${THIS_DUPLICATI_PID}) ${name} $3 &
     
     ############################################################################
     # Wait for duplicati to finish, then clean and exit
@@ -241,7 +241,7 @@ duplicati_usage () {
 # If invoked without any arguments, showing the status summary as provided by duplicatirc.
 # If a single argument is provided, the current log output of this job is shown using tail.
 duplicati_status () {
-    if [ -z $1 ] ; then
+    if [ -z "$1" ] ; then
         source $DUPLICATIRC
     else
        tail -f ${LOG_PATH}${LOG_PREFIX}.$1.*  
@@ -252,6 +252,13 @@ duplicati_status () {
 # This function checks if there is an update available for the helper and installs the update
 # Arguments: The arguments of the initial run 
 update_helper () {
+    # Check for interactive shell
+    STDIN="$(readlink -f /proc/31489/fd/0)"
+    if [[ $STDIN == *"/dev/null"* ]] || [[ $STDIN == *"(deleted)"* ]] ; then
+        echo "No user interaction, postponing update"
+        return
+    fi
+
     CURRENT_DIR=$(pwd)
     GIT_DIR=$(dirname $(readlink -f $0))
 
@@ -362,7 +369,7 @@ exit_duplicati () {
             STATUS="${JOB_FUNC} NOT successful" ;;
     esac
 
-    if [ -z $JOB_NAME ] ; then
+    if [ -z "$JOB_NAME" ] ; then
         # Check if log is accessible
         if >> "${LOG_PATH}${LOG_PREFIX}.log" ; then
             # Write to log
@@ -434,21 +441,64 @@ fdswap () {
 }
 
 # This function monitors a log file and optionally prints out its content
+# Additionally it analyzes the log file, summaryzing the current status in a status file, placed next to the pid file, with the following naming convention: status.${DUPLICATI_PID_PREFIX}.${name} A line will always be shorter than 20 characters.
 # $1: The path to the log file
 # $2: The PID of duplicati (in order to stop monitoring after duplicati finished
-# $3: Quiet flag (not outputting monitored content)
+# $3: The name of the running backup job
+# $4: Quiet flag (not outputting monitored content)
 monitor_log() {
-    if [ ! -z $1 ] && [ ! -z $2 ] ; then
+    STATUS_FILE=${PID_DIR}status.${DUPLICATI_PID_PREFIX}.${name}
+    # Making sure status file is empty
+    echo "Initiating..." > $STATUS_FILE
+    
+    # This variable will contain the mode, duplicati is currently in
+    # Possible values are:
+    #   Remote backup chk   [started by "Checking remote backup ..."]
+    #   Scanning            [started by "Scanning local files ..."] 
+    #   Backup verification [started by "Verifying remote backup ..."]
+
+    MODE=""
+
+    if [ ! -z "$1" ] && [ ! -z "$2" ]  && [ ! -z "$3" ]; then
         tail -f --pid=$2 $1 | \
         while read line ; do
-            if [ -z $3 ] ; then
-                echo $line
+            if [ -z "$4" ] ; then
+                echo "$line"
             fi
-            #echo "$line" | grep "pattern"
-            #if [ $? = 0 ] ; then
-                # Process match
-            #fi
+
+            # Checking for mode change
+            echo "$line" | grep -e "Checking remote backup ..." -e "Scanning local files ..." -e "Verifying remote backup ..."
+            if [ $? = 0 ] ; then
+                if [[ "$line" == *"Checking remote backup ..."* ]] ; then
+                    MODE="Remote backup chk"
+                elif [[ "$line" == *"Scanning local files ..."* ]] ; then
+                    MODE="Scanning"
+                elif [[ "$line" == *"Verifying remote backup ..."* ]] ; then
+                    MODE="Backup verification"
+                else
+                    echo "Unexpexted token: $line"
+                fi
+                echo $MODE > $STATUS_FILE
+            else                            # No mode change, but maybe updates
+                if [ "$MODE" == "Scanning" ] ; then
+                    
+                    # The following command is the most precise, but would exceed the 20 char requirement
+                    TEMP=$(echo $line | grep -oP "examined \([0-9]+\.?[0-9]* [T|G|M|K]?[B|b]")
+                    if [ ! -z "$TEMP" ] ; then
+                        TEMP=${TEMP:9}
+                        # Getting only values before comma
+                        SIZE=$(echo $TEMP | grep -oP "\([0-9]+")
+                        # Removing comma
+                        SIZE=${SIZE:1}
+                        UNIT=$(echo $TEMP | grep -oP "[T|G|M|K]?[B|b]")
+                        echo "${MODE}: ${SIZE}${UNIT} left" > $STATUS_FILE
+                    fi
+                fi
+            fi
         done
+    fi
+    if [ -e $STATUS_FILE ] ; then
+        rm $STATUS_FILE
     fi
 }
 

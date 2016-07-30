@@ -63,9 +63,13 @@ if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
         # Get job name out of pid file name
         f="${f//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
         f="${f//.pid}"
-        
-        printLine $f $FILE_DATE "running"
-        # Print running jobs
+
+        # Print running jobs, with status (if available)
+        if [ -e "${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$f" ] ; then
+            printLine $f $FILE_DATE "$(cat "${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$f")"
+        else
+            printLine $f $FILE_DATE "running"
+        fi
     done
     echo "$HR"
 fi
