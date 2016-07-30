@@ -127,10 +127,10 @@ run_duplicati () {
     ${DUPLICATI} ${DUPLICATI_ARG} & echo $! > ${THIS_DUPLICATI_PID}
 
     # Workaround using gdb and swapping file descriptors. See 8) for explanation of the problem
-    if [ "$3" = "quiet" ] ; then
-        fdswap $(cat ${THIS_DUPLICATI_PID}) ${THIS_CLI_LOG_PATH}
-    fi
+    fdswap $(cat ${THIS_DUPLICATI_PID}) ${THIS_CLI_LOG_PATH}
 
+    monitor_log ${THIS_CLI_LOG_PATH} $(cat ${THIS_DUPLICATI_PID}) $3 &
+    
     wait $(cat ${THIS_DUPLICATI_PID}) 
     success=$?
     rm ${THIS_DUPLICATI_PID}
@@ -288,11 +288,23 @@ exit_duplicati () {
     esac
 
     if [ -z $JOB_NAME ] ; then
-        # Write to log
-        echo "${JOB_TIME}: Duplicati finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.log"
+        # Check if log is accessible
+        if >> "${LOG_PATH}${LOG_PREFIX}.log" ; then
+            # Write to log
+            echo "${JOB_TIME}: Duplicati finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.log"
+        else
+            echo "${JOB_TIME}: Duplicati finished ${STATUS}"
+            echo "Unable to write log."
+        fi
     else
-        # Write to log
-        echo "${JOB_TIME}: Job \"${JOB_NAME}\" finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
+        # Check if log is accessible
+        if >> "${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log" ; then
+            # Write to log
+            echo "${JOB_TIME}: Job \"${JOB_NAME}\" finished ${STATUS}" >> "${LOG_PATH}${LOG_PREFIX}.${JOB_NAME}.log"
+        else
+            echo "${JOB_TIME}: Job \"${JOB_NAME}\" finished ${STATUS}" 
+            echo "Unable to write log."
+        fi
 
         # Modify status file unless status code is 3 or 5
         if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
@@ -344,6 +356,26 @@ fdswap () {
         echo 'detach' 
         echo 'quit'
     ) | sudo gdb -q -x - > /dev/null 2>&1
+}
+
+# This function monitors a log file and optionally prints out its content
+# $1: The path to the log file
+# $2: The PID of duplicati (in order to stop monitoring after duplicati finished
+# $3: Quiet flag (not outputting monitored content)
+monitor_log() {
+    if [ ! -z $1 ] && [ ! -z $2 ] ; then
+        tail -f --pid=$2 $1 | \
+        while read line ; do
+            if [ -z $3 ] ; then
+                echo $line
+            fi
+            #echo "$line" | grep "pattern"
+            #if [ $? = 0 ] ; then
+                # Process match
+            #fi
+        done
+        echo "Thank you for monitoring files with us!"
+    fi
 }
 
 main $@
