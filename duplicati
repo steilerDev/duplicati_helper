@@ -264,11 +264,26 @@ update_helper () {
         REMOTE=$(git rev-parse @{u})
 
         if [ $LOCAL != $REMOTE ]; then
-            echo -n "updates available, installing and restarting command..."
-            git pull > /dev/null 2> /dev/null
-            cd $CURRENT_DIR
-            echo "done"
-            exec $0 $@
+            echo "updates available!"
+            echo "Changelog:" 
+            git --no-pager log $LOCAL..$REMOTE --pretty=format:'    %ci: %s %cr <by %cn>' --abbrev-commit
+            while true ; do
+                read -p "Do you want to update the helper now? (Make sure you change settings files as advised in changelog) [y/n]" yn
+                case $yn in
+                    [Yy]* )
+                        echo -n "Updating..."
+                        git pull > /dev/null 2> /dev/null
+                        cd $CURRENT_DIR
+                        echo "done, restarting helper now!"
+                        exec $0 $@
+                        exit ;;
+                    [Nn]* )
+                        cd $CURRENT_DIR
+                        return 1 ;;
+                    * )
+                        echo "Please answer yes or no.";;
+                esac
+            done
             exit
         else
             echo "no update available"
