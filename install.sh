@@ -20,6 +20,7 @@ main () {
     yes_no "Do you want to install duplicati?" 1 "install_duplicati"
     yes_no "Do you want to install duplicati helper scripts?" 1 "install_duplicati_helper"
     yes_no "Do you want to configure your duplicati helper scripts?" 1 "config_duplicati_helper"
+    yes_no "Duplicati should only be run as root. Should file permissions be set accordingly, protecting your personal information?" 1 "set_permissions"
     
     echo "All finished, enjoy!"
     echo
@@ -220,6 +221,19 @@ config_duplicati_helper () {
     echo
     echo "Now the configuration is done, configure your backup by editing the file ${DUPLICATI_HELPER_PATH}/backup.conf"
     echo
+}
+
+set_permissions () {
+    echo -n "Setting permissions..."
+    chown -R root ${DUPLICATI_HELPER_PATH}
+    chmod 600 ${DUPLICATI_HELPER_PATH}/backup.conf
+    chmod 744 ${DUPLICATI_HELPER_PATH}/duplicati
+    chmod 644 ${DUPLICATI_HELPER_PATH}/duplicati.conf
+    chmod 755 ${DUPLICATI_HELPER_PATH}/duplicati_completion
+    chmod 755 ${DUPLICATI_HELPER_PATH}/duplicatirc
+    chmod 644 ${DUPLICATI_HELPER_PATH}/install.sh
+    # shutdown should have the same permissions as its original (this was ensured during installation)
+    echo "Done"
 }
 
 # Prints a header, shown during configuration
