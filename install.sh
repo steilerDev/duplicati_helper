@@ -68,7 +68,7 @@ check_dependencies () {
 
 install_dependencies () {
     if [ ! -z "$MISSING_DEP" ] ; then
-        echo "Installing missing dependencies using apt-get..."
+        echo "Installing missing dependencies using apt-get (This might take a while)..."
         sudo apt-get -y install $MISSING_DEP > /dev/null
         echo "...Done"
     else
@@ -78,13 +78,14 @@ install_dependencies () {
 
 # This function installs the mono library, required to execute the application
 install_mono () {
-    echo -n "Adding mono to your apt sources..."
+    echo -n "Adding mono to your apt sources (This might take a while because your local repository needs to be updated)..."
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2> /dev/null
     sudo sh -c "echo \"deb http://download.mono-project.com/repo/debian wheezy main\" >> /etc/apt/sources.list.d/mono-xamarin.list"
+    sudo apt-get update
     echo "Done"
     echo
 
-    echo "Installing mono with apt-get..."
+    echo "Installing mono with apt-get (This might take a while)..."
     sudo apt-get install -y mono-complete > /dev/null
     echo "...Done"
     echo
@@ -103,7 +104,7 @@ install_duplicati () {
     echo "Done"
     echo
 
-    echo -n "Getting latest Duplicati release..."
+    echo -n "Getting latest Duplicati release (This might take a while)..."
     sudo wget $DUPLICATI_URL -O $DUPLICATI_TEMP > /dev/null 2>&1
     echo "Done"
     echo 
@@ -189,7 +190,7 @@ install_duplicati_helper () {
 
     echo -n "Fixing -eventually broken- references to config file..."
     for f in duplicati duplicatirc duplicati_completion shutdown; do
-        sudo sed -i '/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
+        sudo sed -i '0,/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
     done
     echo "Done"
 }
@@ -257,22 +258,14 @@ set_permissions () {
     if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
         echo -n "Setting permissions..."
 
-echo "        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}"
- echo "       chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf"
- echo "       chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati"
- echo "       chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf"
- echo "       chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion"
- echo "       chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc"
- echo "       chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh"
- echo "       chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown"
-        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
-        chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
-        chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
-        chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf
-        chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion
-        chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc
-        chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh
-        chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown
+        sudo chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
+        sudo chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
+        sudo chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
+        sudo chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf
+        sudo chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion
+        sudo chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc
+        sudo chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh
+        sudo chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown
         echo "Done"
     fi
 }
