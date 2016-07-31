@@ -10,7 +10,11 @@ DUPLICATI_HELPER_PATH="/opt/"
 SHUTDOWN_BIN=""
 
 main () {
+    echo
+    echo "#######################################################################"
     echo "Welcome to the installer for mono, duplicati and the duplicati helpers!"
+    echo "#######################################################################"
+    echo "Made with <3 by steilerDev"
     echo
 
     check_root 
@@ -53,7 +57,7 @@ check_dependencies () {
     do
         if ! which $dep > /dev/null ; then
             echo "$dep not installed!"
-            MISSING_DEP="$MISSING_DEP $dep"
+            MISSING_DEP+="$dep "
         fi
     done
     if [ ! -z "$MISSING_DEP" ] ; then
@@ -76,7 +80,7 @@ install_dependencies () {
 install_mono () {
     echo -n "Adding mono to your apt sources..."
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2> /dev/null
-    echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
+    sudo sh -c "echo \"deb http://download.mono-project.com/repo/debian wheezy main\" >> /etc/apt/sources.list.d/mono-xamarin.list"
     echo "Done"
     echo
 
@@ -177,7 +181,7 @@ install_duplicati_helper () {
             echo "Unable to link file, '/etc/bash_completion.d' does not exist"
             echo "!!!!!!!!"
         fi
-        echo "Please make sure you have bash_completion activated in your '/etc/bash.bashrc' or '~/.bashrc' (you need the line '. /etc/bash_completion' in at least on of these files"
+        echo "    Please make sure you have bash_completion activated in your '/etc/bash.bashrc' or '~/.bashrc' (you need the line '. /etc/bash_completion' in at least on of these files"
         echo "...Done"
     fi
     echo
@@ -303,18 +307,20 @@ config_duplicati_helper_item () {
 # $4 Comment for the key-value pair, in case entry did not exist yet (optional)
 set_config_value () {
     CONFIGFILE="${DUPLICATI_HELPER_PATH}/duplicati.conf"
-    touch $CONFIGFILE
+    if [ ! -e "$CONFIGFILE" ] ; then
+        sudo touch $CONFIGFILE
+    fi
     
     if grep -q $1 $CONFIGFILE ; then
         sudo sed -i '/'"$1"'/c\'"$1"'="'"$2"'"' $CONFIGFILE
     else
         if [ ! -z "$3" ] ; then
-            echo "# $3" >> $CONFIGFILE
+            sudo sh -c "echo \"# $3\" >> $CONFIGFILE"
         fi
         if [ ! -z "$4" ] ; then
-            echo "# $4" >> $CONFIGFILE
+            sudo sh -c "echo \"# $4\" >> $CONFIGFILE"
         fi
-        echo "$1=\"$2\"" >> $CONFIGFILE
+        sudo sh -c "echo \"$1=\\\"$2\\\"\" >> $CONFIGFILE"
     fi
 }
 
