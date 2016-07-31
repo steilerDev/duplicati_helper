@@ -254,9 +254,17 @@ config_duplicati_helper () {
 }
 
 set_permissions () {
-    source "${DUPLICATI_HELPER_PATH}/duplicati.conf"
     if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
         echo -n "Setting permissions..."
+
+echo "        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}"
+ echo "       chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf"
+ echo "       chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati"
+ echo "       chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf"
+ echo "       chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion"
+ echo "       chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc"
+ echo "       chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh"
+ echo "       chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown"
         chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
         chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
         chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
