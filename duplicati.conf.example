@@ -37,17 +37,17 @@ DUPLICATIRC="/opt/duplicati_helper/duplicatirc"
 HELPER_AUTO_UPDATE="true"
 
 # Advanced duplicati settings
-## These are command line arguments for duplicati, sorted by topic. 
-COMPRESSION_MODULE="--compression-module=\"7z\" --7z-compression-level=7"
+## These are command line arguments for duplicati, sorted by topic. The value needs to be surounded by escaped double quotes.
+COMPRESSION_MODULE="--compression-module=\"7z\" --7z-compression-level=\"7\""
 ENCRYPTION_MODULE="--encryption-module=\"aes\""
-BACKUP_MODULE="--number-of-retries=25 --keep-time=\"3M\" --dblock-size=\"200mb\" --snapshot-policy=\"on\""
+BACKUP_MODULE="--number-of-retries=\"25\" --keep-time=\"3M\" --dblock-size=\"200mb\" --snapshot-policy=\"on\""
 ## This sets duplicati's update policy
 DUPLICATI_UPDATE_POLICY=InstallBefore
 
 # Advanced helper settings
 ## This status file will hold the information about the status of previous backups. Use duplicatirc to display it at log in. 
 BACKUP_STATUS_FILE="/opt/duplicati_helper/backup.status"
-## The directory to store the PID files of running duplicati jobs.
+## The directory to store the PID files of running duplicati jobs as well as status information about running jobs.
 PID_DIR="/run/"
 ## The prefix every duplicati job PID file will get. The following schema will be used: prefix.backupName.pid
 DUPLICATI_PID_PREFIX="duplicati"
