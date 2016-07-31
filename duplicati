@@ -22,6 +22,9 @@ main () {
     elif [ "$1" = "status" ] ; then
         ## Show the status, displayed 
             duplicati_status $2
+    elif [ "$1" = "update" ] ; then
+        ## Update the helper
+            update_helper
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
@@ -252,7 +255,7 @@ duplicati_status () {
 }
 
 # This function checks if there is an update available for the helper and installs the update
-# Arguments: The arguments of the initial run 
+# Arguments: The arguments of the initial run, if empty we assume that this is not an auto but manual update, exiting the application afterwards
 update_helper () {
     # Check for interactive shell
     STDIN="$(readlink -f /proc/31489/fd/0)"
@@ -285,27 +288,45 @@ update_helper () {
                         echo -n "Updating..."
                         git pull > /dev/null 2> /dev/null
                         cd $CURRENT_DIR
-                        echo "done, restarting helper now!"
-                        exec $0 $@
-                        exit ;;
+                        if [ ! -z "$@" ] ; then
+                            echo "done, restarting helper now!"
+                            exec $0 $@
+                            exit
+                        else
+                            echo "done, your helper is now up-to-date!"
+                            exit_duplicati 0 "update"                            
+                        fi ;;
                     [Nn]* )
                         cd $CURRENT_DIR
-                        return 1 ;;
+                        if [ ! -z "$@" ] ; then
+                            return 1 
+                        else
+                            exit_duplicati 1 "update"
+                        fi ;;
                     * )
                         echo "Please answer 'y' for yes or 'n' for no.";;
                 esac
             done
-            exit
+            exit_duplicati 3 "update"
         else
             echo "no update available"
-            echo
+            cd $CURRENT_DIR
+            if [ ! -z "$@" ] ; then
+                echo
+            else
+                exit_duplicati 1 "update"
+            fi
         fi
     else
         echo "unable to get update, try again later"
-        echo
+        cd $CURRENT_DIR
+        if [ ! -z "$@" ] ; then
+            echo
+        else
+            exit_duplicati 3 "update"
+        fi
     fi
 
-    cd $CURRENT_DIR
 }
 
 help () {
@@ -333,6 +354,8 @@ help () {
     echo "      Shows the status table, shown during log in"
     echo "  Job status:     $0 status <backup name>"
     echo "      Shows the live log output of the specified job, using tail"
+    echo "  Manual update:  $0 update"
+    echo "      Checks for updates of the duplicati helper and installs them"
     echo "  Duplicati:      $0 command"
     echo "      The duplicati command line interface is started with all arguments that follow 'command'"
     exit_duplicati 3 "help"

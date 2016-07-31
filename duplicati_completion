@@ -8,6 +8,7 @@ source /opt/duplicati_helper/duplicati.conf
 #   duplicati status
 #   duplicati command
 #   duplicati help
+#   duplicati update
 
 _duplicati() 
 {
@@ -22,7 +23,7 @@ _duplicati()
    
         # The first argument is one of the modifiers 
         if [ "${#COMP_WORDS[*]}" = "2" ] ; then
-            opts="repair backup kill server usage status command help"
+            opts="repair backup kill server usage status command help update"
         # the second argument is a backup name (in case the modifiers requires it)
         elif ( [ "${#COMP_WORDS[*]}" -gt 2 ] && ( [ "${mod}" = "backup" ] || [ "${mod}" = "repair" ] || [ "${mod}" = "kill" ] || [ "${mod}" = "status" ] )) ; then
             opts=""
