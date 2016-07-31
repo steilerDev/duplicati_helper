@@ -288,20 +288,20 @@ update_helper () {
                         echo -n "Updating..."
                         git pull > /dev/null 2> /dev/null
                         cd $CURRENT_DIR
-                        if [ ! -z "$@" ] ; then
+                        if [ $# -eq 0 ]; then
+                            echo "done, your helper is now up-to-date!"
+                            exit_duplicati 0 "update"                            
+                        else
                             echo "done, restarting helper now!"
                             exec $0 $@
                             exit
-                        else
-                            echo "done, your helper is now up-to-date!"
-                            exit_duplicati 0 "update"                            
                         fi ;;
                     [Nn]* )
                         cd $CURRENT_DIR
-                        if [ ! -z "$@" ] ; then
-                            return 1 
-                        else
+                        if [ $# -eq 0 ]; then
                             exit_duplicati 1 "update"
+                        else
+                            return 1 
                         fi ;;
                     * )
                         echo "Please answer 'y' for yes or 'n' for no.";;
@@ -311,19 +311,19 @@ update_helper () {
         else
             echo "no update available"
             cd $CURRENT_DIR
-            if [ ! -z "$@" ] ; then
-                echo
-            else
+            if [ $# -eq 0 ]; then
                 exit_duplicati 1 "update"
+            else
+                echo
             fi
         fi
     else
         echo "unable to get update, try again later"
         cd $CURRENT_DIR
-        if [ ! -z "$@" ] ; then
-            echo
-        else
+        if [ $# -eq 0 ]; then
             exit_duplicati 3 "update"
+        else
+            echo
         fi
     fi
 
