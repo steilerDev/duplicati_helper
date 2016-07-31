@@ -57,6 +57,12 @@ check_dependencies () {
             MISSING_DEP="$MISSING_DEP $dep"
         fi
     done
+
+    yes_no "Do you want to install the missing dependiencies ($MISSING_DEP). Not installing these dependiencies might result in unexpected behaviour of the appliction." 1 "install_dependencies" 
+    echo    
+}
+
+install_dependencies () {
     if [ ! -z "$MISSING_DEP" ] ; then
         echo "Installing missing dependencies using apt-get..."
         sudo apt-get -y install $MISSING_DEP > /dev/null
@@ -64,7 +70,6 @@ check_dependencies () {
     else
         echo "...All dependencies installed!"    
     fi
-    echo
 }
 
 # This function installs the mono library, required to execute the application
