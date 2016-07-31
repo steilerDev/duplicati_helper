@@ -164,7 +164,9 @@ run_duplicati () {
     ############################################################################
     # Run duplicati
     ############################################################################
-
+    
+    # For debugging purposes
+    echo "Invoking duplicati: '${DUPLICATI} ${DUPLICATI_CMD} ${FINAL_OPTIONS} & echo \$! > ${THIS_DUPLICATI_PID}'" >> ${THIS_LOG_PATH}
 
     # Running command
     ${DUPLICATI} ${DUPLICATI_CMD} ${FINAL_OPTIONS} & echo $! > ${THIS_DUPLICATI_PID}
