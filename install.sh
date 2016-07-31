@@ -53,7 +53,7 @@ check_dependencies () {
     echo
     echo "Checking dependencies..."
     MISSING_DEP=""
-    for dep in wget git gdb curl
+    for dep in wget git gdb curl unzip
     do
         if ! which $dep > /dev/null ; then
             echo "$dep not installed!"
@@ -110,7 +110,7 @@ install_duplicati () {
 
     echo -n "Installing latest Duplicati release..."
     sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
-    sudo rm -rf $DUPLICATI_TEMP
+    sudo rm -f $DUPLICATI_TEMP
     echo "Done"
     echo
 }
