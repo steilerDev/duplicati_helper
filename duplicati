@@ -271,8 +271,9 @@ update_helper () {
     if [ $? -eq 0 ]; then
         LOCAL=$(git rev-parse @{0})
         REMOTE=$(git rev-parse @{u})
+        BASE=$(git merge-base @{0} @{u})
 
-        if [ $LOCAL != $REMOTE ]; then
+        if [ $LOCAL != $REMOTE ] && [ $LOCAL = $BASE ] ; then
             echo "updates available!"
             echo "Changelog:" 
             git --no-pager log $LOCAL..$REMOTE --pretty=format:'  %ci: %s <by %cn>' --abbrev-commit
@@ -459,6 +460,7 @@ monitor_log() {
     #   Remote backup chk   [started by "Checking remote backup ..."]
     #   Scanning            [started by "Scanning local files ..."] 
     #   Backup verification [started by "Verifying remote backup ..."]
+    #   Re-creating index   [started by "Re-creating missing index file"]
 
     MODE=""
 
@@ -470,7 +472,7 @@ monitor_log() {
             fi
 
             # Checking for mode change
-            echo "$line" | grep -e "Checking remote backup ..." -e "Scanning local files ..." -e "Verifying remote backup ..."
+            echo "$line" | grep -e "Checking remote backup ..." -e "Scanning local files ..." -e "Verifying remote backup ..." -e "Re-creating missing index file"
             if [ $? = 0 ] ; then
                 if [[ "$line" == *"Checking remote backup ..."* ]] ; then
                     MODE="Remote backup chk"
@@ -478,6 +480,8 @@ monitor_log() {
                     MODE="Scanning"
                 elif [[ "$line" == *"Verifying remote backup ..."* ]] ; then
                     MODE="Backup verification"
+                elif [[ "$line" == *"Re-creating missing index file"* ]] ; then
+                    MODE="Re-creating index"
                 else
                     echo "Unexpexted token: $line"
                 fi
