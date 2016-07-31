@@ -322,6 +322,9 @@ set_config_value () {
         fi
         sudo sh -c "echo \"$1=\\\"$2\\\"\" >> $CONFIGFILE"
     fi
+    
+    # Setting value, in order to make it avaiable in this script
+    eval "$1=$2"
 }
 
 # This function will ask the user to specify a path
