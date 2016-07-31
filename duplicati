@@ -543,7 +543,7 @@ monitor_log() {
                         SIZE=$(echo "$TEMP" | grep -oP "[0-9]+\.?[0-9]*" | head -c 3)
                         # Checking if size ends on ".", if e.g. original size was 23.4 this would result in "23." which is not nice
                         if [[ $SIZE == *"." ]] ; then
-                            $SIZE=${SIZE:0:-1}
+                            SIZE=${SIZE:0:-1}
                         fi
                         # Extracting unit 
                         UNIT=$(echo $TEMP | grep -oP "[T|G|M|K]?[B|b]")
