@@ -7,7 +7,7 @@
 DUPLICATI_PATH="/opt/duplicati/"
 DUPLICATI_HELPER_PATH="/opt/"
 
-SHUTDOWN_BIN=$(which shutdown)
+SHUTDOWN_BIN=""
 
 main () {
     echo "Welcome to the installer for mono, duplicati and the duplicati helpers!"
@@ -49,15 +49,16 @@ check_dependencies () {
     echo
     echo "Checking dependencies..."
     MISSING_DEP=""
-    for dep in wget git gdb
+    for dep in wget git gdb curl
     do
         if ! which $dep > /dev/null ; then
             echo "$dep not installed!"
             MISSING_DEP="$MISSING_DEP $dep"
         fi
     done
-
-    yes_no "Do you want to install the missing dependiencies ($MISSING_DEP). Not installing these dependiencies might result in unexpected behaviour of the appliction." 1 "install_dependencies" 
+    if [ ! -z "$MISSING_DEP" ] ; then
+        yes_no "Do you want to install the missing dependiencies ($MISSING_DEP). Not installing these dependiencies might result in unexpected behaviour of the appliction." 1 "install_dependencies" 
+    fi
     echo    
 }
 
@@ -105,7 +106,7 @@ install_duplicati () {
 
     echo -n "Installing latest Duplicati release..."
     sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
-    rm -rf $DUPLICATI_TEMP
+    sudo rm -rf $DUPLICATI_TEMP
     echo "Done"
     echo
 }
@@ -123,8 +124,8 @@ install_duplicati_helper () {
     echo
     
     echo -n "Duplicating config files from templates..."
-    cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
-    cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
+    sudo cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
+    sudo cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
     echo "Done"
 
     if yes_no "Do you want to install the 'duplicati' script?" 1 ; then
@@ -136,20 +137,24 @@ install_duplicati_helper () {
 
     if yes_no "Do you want the shutdown delayed, in case a backup job is running?" 1 ; then
         echo -n "Installing shutdown script..."
-        sudo mv $SHUTDOWN_BIN ${SHUTDOWN_BIN}-bin
-        sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
-        set_config_value "FP_SHUTDOWN" "$(stat -c "%a" ${SHUTDOWN_BIN}-bin)" "The file permissions, retrieved from the original shutdown binary (${SHUTDOWN_BIN}-bin)"
-        sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
-        sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
-        SHUTDOWN_BIN=${SHUTDOWN_BIN}-bin
-        echo "Done"
+        SHUTDOWN_BIN=$(sudo which shutdown)
+        if [ -z "$SHUTDOWN_BIN" ] ; then
+            echo "Unable to find shutdown binary, unable to install shutdown delay!"
+        else
+            sudo mv "$SHUTDOWN_BIN" "${SHUTDOWN_BIN}-bin"
+            sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
+            set_config_value "FP_SHUTDOWN" "$(stat -c "%a" ${SHUTDOWN_BIN}-bin)" "The file permissions, retrieved from the original shutdown binary (${SHUTDOWN_BIN}-bin)"
+            sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
+            sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
+            SHUTDOWN_BIN=${SHUTDOWN_BIN}-bin
+            echo "Done"
+        fi
     fi
     echo 
 
     if yes_no "Do you want to see the backup status upon login?" 1 ; then
         echo -n "Adding status script to '.bashrc'..."
-        echo "## See the status of current and past duplicati backup jobs" >> $HOME/.bashrc
-        echo "source ${DUPLICATI_HELPER_PATH}/duplicatirc" >> $HOME/.bashrc
+        sudo sh -c "echo \"source ${DUPLICATI_HELPER_PATH}/duplicatirc\" >> $HOME/.bashrc"
         echo "Done"
     fi
     echo
@@ -166,7 +171,7 @@ install_duplicati_helper () {
         fi 
 
         if [ -d /etc/bash_completion.d/ ] ; then
-           ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion
+           sudo ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion
         else
             echo "!!!!!!!!"
             echo "Unable to link file, '/etc/bash_completion.d' does not exist"
