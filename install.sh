@@ -20,7 +20,6 @@ main () {
     yes_no "Do you want to install duplicati?" 1 "install_duplicati"
     yes_no "Do you want to install duplicati helper scripts?" 1 "install_duplicati_helper"
     yes_no "Do you want to configure your duplicati helper scripts?" 1 "config_duplicati_helper"
-    yes_no "Duplicati should only be run as root. Should file permissions be set accordingly, protecting your personal information?" 1 "set_permissions"
     
     echo "All finished, enjoy!"
     echo
@@ -122,6 +121,11 @@ install_duplicati_helper () {
     DUPLICATI_HELPER_PATH=$(pwd)
     echo "...Done" 
     echo
+    
+    echo -n "Duplicating config files from templates..."
+    cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
+    cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
+    echo "Done"
 
     if yes_no "Do you want to install the 'duplicati' script?" 1 ; then
         echo -n "Installing duplicati script..."
@@ -134,6 +138,7 @@ install_duplicati_helper () {
         echo -n "Installing shutdown script..."
         sudo mv $SHUTDOWN_BIN ${SHUTDOWN_BIN}-bin
         sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
+        set_config_value "FP_SHUTDOWN" "$(stat -c "%a" ${SHUTDOWN_BIN}-bin)" "The file permissions, retrieved from the original shutdown binary (${SHUTDOWN_BIN}-bin)"
         sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
         sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
         SHUTDOWN_BIN=${SHUTDOWN_BIN}-bin
@@ -172,10 +177,6 @@ install_duplicati_helper () {
     fi
     echo
 
-    echo -n "Duplicating config files from templates..."
-    cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
-    cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
-    echo "Done"
 
     echo -n "Fixing -eventually broken- references to config file..."
     for f in duplicati duplicatirc duplicati_completion shutdown; do
@@ -201,8 +202,19 @@ config_duplicati_helper () {
     config_duplicati_helper_item "SERVER_PAS" "Password1!" "Specify the password for the webinterface"
 
     print_config_header "Helper settings"
-    config_duplicati_helper_item "HELPER_AUTO_UPDATE" "true" "Do you want to enable auto-updates for the helper programs before executing the 'duplicati' command?" "Choose 'true' or 'false'"
+    config_duplicati_helper_item "HELPER_AUTO_UPDATE" "true" "Do you want to enable auto-updates for the helper programs before executing the 'duplicati' command?" "Choose 'true' or 'false', manual updates are still possible through 'duplicati update'"
     config_duplicati_helper_item "DUPLICATI_UPDATE_POLICY" "InstallBefore" "Specify the update strategy of duplicati itself" "Available values are: 'CheckBefore', 'CheckDuring', 'CheckAfter', 'InstallBefore', 'InstallDuring', 'InstallAfter', 'Never'"
+
+    print_config_header "Helper file permissions"
+    config_duplicati_helper_item "MANAGE_FILE_PERMISSIONS" "true" "Do you want duplicati to set the file permissions, in order to keep your files as safe as possible?" "This should be done, since updating the helper might result in changed file permissions. The next configuration items will ask for your prefered user and access rights."
+    config_duplicati_helper_item "DUPLICATI_USER" "root" "The user, that will be able to execute duplicati (technically this will be the owner of the folder and all files within" "This user should be root, in order to protect your files against unintended access from other users on the system, as well as ensure full access rights and permissions (e.g. creating snapshot) during backup creation"
+    config_duplicati_helper_item "DUPLICATI_GROUP" "root" "The group, that will be able to execute duplicati (technically this will be the owner group of the folder and all files within" "This group should be root, in order to protect your files against unintended access from other users on the system, as well as ensure full access rights and permissions (e.g. creating snapshot) during backup creation"
+    config_duplicati_helper_item "FP_BACKUP_CONF" "600" "Please set the access rights to 'backup.conf'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    config_duplicati_helper_item "FP_DUPLICATI" "744" "Please set the access rights to the 'duplicati' script" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    config_duplicati_helper_item "FP_DUPLICATI_CONF" "644" "Please set the access rights to 'duplicati.conf'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    config_duplicati_helper_item "FP_DUPLICATI_COMPLETION" "755" "Please set the access rights to 'duplicati_completion'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    config_duplicati_helper_item "FP_DUPLICATIRC" "755" "Please set the access rights to 'duplicatirc'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    config_duplicati_helper_item "FP_INSTALL" "644" "Please set the access rights to 'install.sh'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
 
     echo -n "Finishing configuration..."
     # Auto configuration of some values, that might change due to installation is done now.
@@ -215,12 +227,15 @@ config_duplicati_helper () {
     
     # Now making sure that all the advanced default variables will be there
     set_config_value "LOG_PREFIX" "duplicati" "This is the prefix every log file will get. The log files will be named using the following schema: prefix.backupName.log"
-    set_config_value "COMPRESSION_MODULE" '--compression-module=\"7z\" --7z-compression-level=7' "These are command line arguments for duplicati, sorted by topic"
+    set_config_value "COMPRESSION_MODULE" '--compression-module=\"7z\" --7z-compression-level=\"7\"' "These are command line arguments for duplicati, sorted by topic"
     set_config_value "ENCRYPTION_MODULE" '--encryption-module=\"aes\"' "These are command line arguments for duplicati, sorted by topic"
-    set_config_value "BACKUP_MODULE" '--number-of-retries=25 --keep-time=\"3M\" --dblock-size=\"200mb\" --snapshot-policy=\"on\"' "These are command line arguments for duplicati, sorted by topic"
+    set_config_value "BACKUP_MODULE" '--number-of-retries=\"25\" --keep-time=\"3M\" --dblock-size=\"200mb\" --snapshot-policy=\"on\"' "These are command line arguments for duplicati, sorted by topic"
     set_config_value "PID_DIR" "/run/" "The directory to store the PID files of running duplicati jobs"
     set_config_value "DUPLICATI_PID_PREFIX" "duplicati" "The prefix every duplicati job PID file will get. The following schema will be used: prefix.backupName.pid"
     set_config_value "SHUTDOWN_PID_PREFIX" "shutdown" "The name of the shutdown postponing script's PID" "NOTE: This should not be the same, or start the same as DUPLICATI_PID_PREFIX, otherwise the shutdown script will wait on itself"
+    
+    # Setting permissions, according to config (only if user agreed on managing file permissions by duplicati
+    set_permissions
 
     echo "Done" 
     echo
@@ -229,16 +244,19 @@ config_duplicati_helper () {
 }
 
 set_permissions () {
-    echo -n "Setting permissions..."
-    chown -R root ${DUPLICATI_HELPER_PATH}
-    chmod 600 ${DUPLICATI_HELPER_PATH}/backup.conf
-    chmod 744 ${DUPLICATI_HELPER_PATH}/duplicati
-    chmod 644 ${DUPLICATI_HELPER_PATH}/duplicati.conf
-    chmod 755 ${DUPLICATI_HELPER_PATH}/duplicati_completion
-    chmod 755 ${DUPLICATI_HELPER_PATH}/duplicatirc
-    chmod 644 ${DUPLICATI_HELPER_PATH}/install.sh
-    # shutdown should have the same permissions as its original (this was ensured during installation)
-    echo "Done"
+    source "${DUPLICATI_HELPER_PATH}/duplicati.conf"
+    if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
+        echo -n "Setting permissions..."
+        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
+        chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
+        chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
+        chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf
+        chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion
+        chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc
+        chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh
+        chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown
+        echo "Done"
+    fi
 }
 
 # Prints a header, shown during configuration

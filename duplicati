@@ -287,6 +287,8 @@ update_helper () {
                     [Yy]* )
                         echo -n "Updating..."
                         git pull > /dev/null 2> /dev/null
+                        # Correcting permissions, messed up by pull
+                        set_permissions                         
                         cd $CURRENT_DIR
                         if [ $# -eq 0 ]; then
                             echo "done, your helper is now up-to-date!"
@@ -327,6 +329,22 @@ update_helper () {
         fi
     fi
 
+}
+
+# If the user agrees on managing file permissions, this function will set the permissions accordingly. The script requires the user to be in the duplicati helper directory
+set_permissions () {
+    if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
+        echo -n "Correcting permissions..."
+        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} .
+        chmod $FP_BACKUP_CONF ./backup.conf
+        chmod $FP_DUPLICATI ./duplicati
+        chmod $FP_DUPLICATI_CONF ./duplicati.conf
+        chmod $FP_DUPLICATI_COMPLETION ./duplicati_completion
+        chmod $FP_DUPLICATIRC ./duplicatirc
+        chmod $FP_INSTALL ./install.sh
+        chmod $FP_SHUTDOWN ./shutdown
+        echo "Done"
+    fi
 }
 
 help () {

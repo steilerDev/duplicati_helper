@@ -56,3 +56,18 @@ DUPLICATI_PID_PREFIX="duplicati"
 SHUTDOWN_PID_PREFIX="shutdown"
 ## The path to the original shutdown binary
 SHUTDOWN_BIN="/sbin/shutdown-bin"
+
+# Duplicati file permission management:
+## Due to the updating mechanism, duplicati's file permissions get mixed up easily. Set this setting to true, in order to let duplicati only be used by 'root', securying your installation (different user/modes available through additional settings below, however it is not recommendet to change those)
+MANAGE_FILE_PERMISSIONS="true"
+# The owner's group and user
+DUPLICATI_USER="root"
+DUPLICATI_GROUP="root"
+# The file permissions assigned to the files in octal
+FP_BACKUP_CONF="600"
+FP_DUPLICATI="744"
+FP_DUPLICATI_CONF="644"
+FP_DUPLICATI_COMPLETION="755"
+FP_DUPLICATIRC="755"
+FP_INSTALL="644"
+FP_SHUTDOWN="755"
