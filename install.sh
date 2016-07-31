@@ -215,6 +215,7 @@ config_duplicati_helper () {
     config_duplicati_helper_item "FP_DUPLICATI_COMPLETION" "755" "Please set the access rights to 'duplicati_completion'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
     config_duplicati_helper_item "FP_DUPLICATIRC" "755" "Please set the access rights to 'duplicatirc'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
     config_duplicati_helper_item "FP_INSTALL" "644" "Please set the access rights to 'install.sh'" "The value needs to be given as octal. It is highly recommended to use the proposed mode, in order to ensure high privacy and full functionality"
+    set_config_value "FP_BACKUP_STATUS" "644" "The file permissions for the backup status file. This file should be readable by every user and will be created later"
 
     echo -n "Finishing configuration..."
     # Auto configuration of some values, that might change due to installation is done now.

@@ -435,10 +435,14 @@ exit_duplicati () {
 
         # Modify status file unless status code is 3 or 5
         if [ "$1" -ne 3 ] && [ "$1" -ne 5 ] ; then
+            if [ ! -e "${BACKUP_STATUS_FILE}" ] ; then
+                touch ${BACKUP_STATUS_FILE}
+                if [ "MANAGE_FILE_PERMISSIONS" == "true" ] ; then
+                    chown ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${BACKUP_STATUS_FILE} 
+                    chmod $FP_BACKUP_STATUS ${BACKUP_STATUS_FILE} 
+                fi
+            fi 
 
-            touch ${BACKUP_STATUS_FILE}
-            chmod ugo+rw ${BACKUP_STATUS_FILE} 
-    
             # 1) Delete earlier status of this job
             sed -i '/^\(+\|-\)'" ${JOB_NAME}"' /d' ${BACKUP_STATUS_FILE}
     
