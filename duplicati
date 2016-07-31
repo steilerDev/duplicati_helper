@@ -193,7 +193,7 @@ run_duplicati () {
     ############################################################################
     # Wait for duplicati to finish, then clean and exit
     ############################################################################
-    wait $(cat ${THIS_DUPLICATI_PID}) 
+    wait $(cat ${THIS_DUPLICATI_PID}) > /dev/null 2>&1
     success=$?
     rm ${THIS_DUPLICATI_PID}
 
@@ -452,7 +452,7 @@ fdswap () {
 # $4: Quiet flag (not outputting monitored content)
 monitor_log() {
     STATUS_FILE=${PID_DIR}status.${DUPLICATI_PID_PREFIX}.${name}
-    # Making sure status file is empty
+    # Making sure status file is empty and properly initiated 
     echo "Initiating..." > $STATUS_FILE
     
     # This variable will contain the mode, duplicati is currently in
@@ -466,7 +466,7 @@ monitor_log() {
 
     if [ ! -z "$1" ] && [ ! -z "$2" ]  && [ ! -z "$3" ]; then
         tail -f --pid=$2 $1 | \
-        while read line ; do
+        while IFS= read -r line ; do
             if [ -z "$4" ] ; then
                 echo "$line"
             fi
@@ -490,13 +490,16 @@ monitor_log() {
                 if [ "$MODE" == "Scanning" ] ; then
                     
                     # The following command is the most precise, but would exceed the 20 char requirement
-                    TEMP=$(echo $line | grep -oP "examined \([0-9]+\.?[0-9]* [T|G|M|K]?[B|b]")
+                    TEMP=$(echo "$line" | grep -oP "examined \([0-9]+\.?[0-9]* [T|G|M|K]?[B|b]")
                     if [ ! -z "$TEMP" ] ; then
-                        TEMP=${TEMP:9}
-                        # Getting only values before comma
-                        SIZE=$(echo $TEMP | grep -oP "\([0-9]+")
-                        # Removing comma
-                        SIZE=${SIZE:1}
+                        TEMP=${TEMP:10}
+                        # Getting only the values and allowing only the first 3 characters through
+                        SIZE=$(echo "$TEMP" | grep -oP "[0-9]+\.?[0-9]*" | head -c 3)
+                        # Checking if size ends on ".", if e.g. original size was 23.4 this would result in "23." which is not nice
+                        if [[ $SIZE == *"." ]] ; then
+                            $SIZE=${SIZE:0:-1}
+                        fi
+                        # Extracting unit 
                         UNIT=$(echo $TEMP | grep -oP "[T|G|M|K]?[B|b]")
                         echo "${MODE}: ${SIZE}${UNIT} left" > $STATUS_FILE
                     fi
