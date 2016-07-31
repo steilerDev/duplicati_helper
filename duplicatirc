@@ -4,93 +4,203 @@ source /opt/duplicati_helper/duplicati.conf
 # This file is intended to be included into the .bashrc file via 'source'
 # This short script checks if the backup is currently running or if there was a
 # backup since the last log on. 
+# The status width is limited to 80 characters
 ####
 
 # Set duplicati update policy
 export AUTOUPDATER_Duplicati_POLICY=$DUPLICATI_UPDATE_POLICY
 
-DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
-SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
+# Some global variables required for duplicati
+    DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"
+    SHUTDOWN_PID="${PID_DIR}${SHUTDOWN_PID_PREFIX}.pid"
 
-# A horizontal line
-HR="+---+----------+---------------------+-----------------------------------------+"
+    # The headline, printed above the table
+    HEADLINE="B A C K U P  S T A T U S"
 
-# Print table header
-echo "B A C K U P  S T A T U S"
+    # A horizontal line
+    HR="+---+----------+---------------------+-----------------------------------------+"
 
-echo "$HR"
-echo "|   |   Name   |        Time         |                 Status                  |"
-echo "$HR"
-
-# Prints a proper alligned line for the table
-# $1 Prop column (optional, only '+' allowed max. length 2)
-# $2 Name column (no spaces allowed, max. length 8)
-# $3 Time column (no spaces allowed, max. length 19)
-# $4 Status column (max. length 39)
-printLine() {
     # Available spaces for column
     SPACES="                                        "
+
+    # Column widths
     PROP_COL=1
     NAME_COL=8
     TIME_COL=19
     STAT_COL=39
-    
-    echo -n "| " 
-    if [ "$1" == "+" ] ; then
-        echo -n "+" | head -c $PROP_COL
-        shift
-    else
-        echo -n " " | head -c $PROP_COL
+
+# This function will print the table header
+printHeader () {
+    if [ ! -z "$HEADLINE" ] ; then
+        # Always center headline, see explanation below in "printLine"
+        REQUIRED_SPACES=$(( (${#HR} - ${#HEADLINE})/2 )) 
+        if (( $REQUIRED_SPACES > 0 )) ; then
+            THIS_SPACES=$(echo -n "$SPACES" | head -c $REQUIRED_SPACES) 
+            echo "${THIS_SPACES}$HEADLINE" 
+        else
+            echo "$HEADLINE"
+        fi
     fi
-     
-    echo -n " | "
-    echo -n "$1 $SPACES" | head -c $NAME_COL 
-    echo -n " | "
+
+    echo "$HR"
+    printLine -c "#" "Name" "Time" "Status"
+    echo "$HR"
+}
+
+# This function will check for running duplicati instances and print their status
+printRunningDuplicati () {
+    # Is any instance of duplicati running
+    if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
+        for THIS_PID_FILE in ${DUPLICATI_PIDS} ; do
+
+            THIS_PID=$(cat ${THIS_PID_FILE})
+
+            # Check if duplicati is actually running, or if the pid file is just lying there
+            if ps -p ${THIS_PID} > /dev/null ; then
+                
+                # Get start time of the running job
+                JOB_DATE=$(stat -c '%y' ${THIS_PID_FILE})
+                # Replace spaces in order to handle it properly in subsequent function calls
+                JOB_DATE=${JOB_DATE// /_}
+
+                # Get job name out of pid file name
+                JOB_NAME="${THIS_PID_FILE//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
+                JOB_NAME="${JOB_NAME//.pid}"
+
+                STATUS_FILE="${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$JOB_NAME"
+
+                # Print running jobs, with status (if available)
+                if [ -e "${STATUS_FILE}" ] ; then
+                    printLine "#" $JOB_NAME $JOB_DATE "$(cat "${STATUS_FILE}")"
+                else
+                    printLine "#" $JOB_NAME $JOB_DATE "running"
+                fi
+
+                # Print a second line, containing usage information about running jobs
+                CPU="$(ps -p ${THIS_PID} -o %cpu | tail -n +2)% CPU"
+                MEM="$(ps -p ${THIS_PID} -o %mem | tail -n +2)% MEM"
+                printLine "#" "#" "#" "Usage: $CPU $MEM" 
+                
+            else
+                # If there is a PID file, but no running process delete the pid file
+                rm "$THIS_PID_FILE"
+            fi
+        done
+        echo "$HR"
+    fi
+}
+
+# This function will read the backup status file and print out the status of all former backups
+printFinishedDuplicati () {
+    # What is the status of previous backups?
+    if [ -e $BACKUP_STATUS_FILE ] ; then
+        # Status describes, if the backup status was read earlier, if status is '+' it is an unread entry that needs to be marked read, '-' means that it was read earlier
+        while read -r prop name time status ; do
+            if [ "${prop}" == "+" ] ; then
+                # Mark read (delete row with '+' and enter new one with '-')
+                sed -i '/^\(-\|+\) '"${name}"' /d' ${BACKUP_STATUS_FILE} 
+                echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
+                printLine "+" ${name} ${time} ${status}
+            else
+                printLine "#" ${name} ${time} ${status}
+            fi
+        done < "${BACKUP_STATUS_FILE}"
+        echo "$HR"
+    fi
+}
+
+# This function will check if a shutdown is scheduled and print it 
+printScheduledShutdown () {
+    # Is a shutdown scheduled?
+    if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
+        # Is the shutdown actually running or is the pid just lying around?
+        if ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
+            echo
+            echo "## Shutdown is scheduled ##"
+        else                    # Remove PID file if it is a zombie
+            rm "$SHUTDOWN_PID" 
+        fi
+    fi
+}
+
+
+# Helper function to print a proper alligned line for the table
+# If a column variable starts with "#" the column will be left empty
+# $1 "-c", optional: Indicates, that the columns should be centered vs. left alligned
+# $2 Prop column (no spaces allowed, max. length 2)
+# $3 Name column (no spaces allowed, max. length 8)
+# $4 Time column (no spaces allowed, max. length 19)
+# $5 Status column (max. length 38)
+printLine() {
+
+    LINE_CENTER=""
+    if [ "$1" == "-c" ] ; then
+        LINE_CENTER="-c"
+        shift
+    fi
+
+    # Prop column
+    printColumn -s $LINE_CENTER $PROP_COL $1
     shift
-    echo -n "$1 $SPACES" | head -c $TIME_COL
-    echo -n " | "
+
+    # Name column
+    printColumn $LINE_CENTER $NAME_COL $1
     shift
-    echo -n "$@ $SPACES" | head -c $STAT_COL
+
+    # Time column
+    printColumn $LINE_CENTER $TIME_COL $1
+    shift
+
+    # Status column
+    printColumn $LINE_CENTER $STAT_COL $@
+    
+    # Closing table
     echo " |"
 }
 
-# Is duplicati running
-if ls ${DUPLICATI_PIDS} 1> /dev/null 2>&1; then
-    for f in ${DUPLICATI_PIDS} ; do
-        FILE_DATE=$(stat -c '%y' $f)
-        # Replace spaces
-        FILE_DATE=${FILE_DATE// /_}
-        # Get job name out of pid file name
-        f="${f//${PID_DIR}${DUPLICATI_PID_PREFIX}.}"
-        f="${f//.pid}"
+# Helper function to print a single column
+# $1 "-c" and/or "-s", where "-c" indicates, that the column should be centered and "-s" indicated that this is the starting column
+# $1 Lenghts of the column
+# $2 Content of the column (if starting with "#" the content will be left empty
+printColumn() {
+    COL_CENTER=""
+    START=""
 
-        # Print running jobs, with status (if available)
-        if [ -e "${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$f" ] ; then
-            printLine $f $FILE_DATE "$(cat "${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$f")"
+    while [ $1 == "-c" ] || [ $1 == "-s" ] ; do
+        if [ $1 == "-c" ] ; then
+            COL_CENTER="true"
+        elif [ $1 == "-s" ] ; then
+            START="true"
         else
-            printLine $f $FILE_DATE "running"
+            break
         fi
+        shift
     done
-    echo "$HR"
-fi
+   
+    if [ "$START" == "true" ] ; then
+        echo -n "| "
+    else
+        echo -n " | "
+    fi
 
-# What is the status of previous backups?
-if [ -e $BACKUP_STATUS_FILE ] ; then
-    # Status describes, if the backup status was read earlier, if status is '+' it is an unread entry that needs to be marked read, '-' means that it was read earlier
-    while read -r prop name time status ; do
-        if [ "${prop}" == "+" ] ; then
-            sed -i '/^\(-\|+\) '"${name}"' /d' ${BACKUP_STATUS_FILE} 
-            echo "- ${name} ${time} ${status}" >> $BACKUP_STATUS_FILE
-        else
-            prop=""
+    LINE="${@:2}"
+    if [[ "$LINE" == "#"* ]] ; then                     # If the text starts with a "#", ignore content
+        echo -n "$SPACES" | head -c $1
+    else                                                # Otherwise print content
+        if [ "$COL_CENTER" == "true" ] ; then           # If center flag is set
+            REQUIRED_SPACES=$(( ($1 - ${#LINE})/2 ))    # Calculate additional spaces in front of content
+            if (( $REQUIRED_SPACES > 0 )) ; then        # Only try to center if result is positive
+                THIS_SPACES=$(echo -n "$SPACES" | head -c $REQUIRED_SPACES) # Get right amount of spaces
+                echo -n "${THIS_SPACES}$LINE $SPACES" | head -c $1          # Cut it at the end
+                return
+            fi
         fi
-        printLine ${prop} ${name} ${time} ${status}
-    done < "${BACKUP_STATUS_FILE}"
-    echo "$HR"
-fi
+        echo -n "$LINE $SPACES" | head -c $1            # If not centered, just print content
+    fi
+}
 
-# Is a shutdown scheduled?
-if [ -e $SHUTDOWN_PID ] && ps -p $(cat $SHUTDOWN_PID) > /dev/null ; then
-    echo
-    echo "## Shutdown is scheduled ##"
-fi
+# Printing one section after another
+printHeader
+printRunningDuplicati
+printFinishedDuplicati
+printScheduledShutdown
