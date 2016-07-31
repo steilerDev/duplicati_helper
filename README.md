@@ -3,6 +3,30 @@ This repository is a collection of helper scripts, simplifying the interface of 
 
 **Disclaimer**: This project is developed independent from [duplicati](https://github.com/duplicati/duplicati) and is intended to be used with duplicati v.2 Beta. I am only testing these helpers with Amazon Cloud Drive, other providers should work as well, however you might need to modify the script slightly.
 
+# Installation
+## Automatic installation (beta)
+You can use the installation script provided, to install mono, duplicati and the duplicati helper scripts, as well as configure everything.
+
+*DISCLAIMER*: I only tested this under Debian 7 and 8.
+
+The following command will download and execute the install script that will do all the work for you: `wget https://raw.githubusercontent.com/steilerDev/duplicati_helper/master/install.sh && chmod +x install.sh && ./install.sh && rm install.sh`
+
+## Manual installation
+In case the automatic installation does not work, or you don't trust my script, first install mono and duplicati according to the provided docs. My script should work within any shell. Currently the quiet mode only works if you have `gdb` installed.
+
+1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
+2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
+  * If you want to use the `quiet` workaround you need to install `gdb` and mono needs to have version 4.3.2.467, 4.4.x, or higher
+3. In case you want a shutdown delayed by running duplicati jobs, do the following:
+  * `mv /sbin/shutdown /sbin/shutdown-bin`
+  * `ln -s /opt/duplicati_helper/shutdown`
+  * Make sure the access rights to `/opt/duplicati_helper/shutdown` match `/sbin/shutdown-bin`
+4. In order to show the backup status during log-in on the console, include `source /opt/duplicati_helper/duplicatirc` in your `~/.bashrc` (or similiar depending on your bash)
+5. In case your system supports bash autocompletion and you want to use this feature for the duplicati script link the provided script to the auto completion directory: `ln -s /opt/duplicati_helper/duplicati_completion /etc/bash_completion.d/` (NOTE: Check if the linking was successfull using `. /etc/bash_completion`. You might be prompted an error, saying that there are to many levels of linkage. Just remove the link and re-link it again, this fixed it on my systems)
+6. Configure your general duplicati settings based on the provided example in `/opt/duplicati_helper/duplicati.conf.example`
+7. Configure your backups based on the provided example in `/opt/duplicati_helper/backup.conf.example`
+8. In order for the helper scripts to use your `duplicati.conf` file, you either need to move it to `/opt/duplicati_helper/duplicati.conf`, or you need to modify the second line (`source /opt/duplicati_helper/duplicati.conf`) of `duplicatirc`, `duplicati`, `duplicati_completion` and `shutdown`, pointing to your configuration path.
+
 # Components
 This repository contains different components, that can be used indipendent of each other. However I recommend to use all of them, in order to get the full experience.
 
@@ -34,25 +58,3 @@ This script is intended to give a summary of every backup job's current status u
 
 ## shutdown
 This script is a drop-in replacement for the shutdown procedure, checking if there are any running duplicati jobs and postponing the shutdown until all jobs finished. Upon calling `shutdown` it will notify all open terminals, that a shutdown is scheduled, but delayed. A scheduled shutdown can be canceled using `shutdown -c`. In case a shutdown is scheduled, `duplicatirc` will display that information.
-
-# Installation
-## Automatic installation (beta)
-You can use the installation script provided, to install mono, duplicati and the duplicati helper scripts, as well as configure everything.
-*DISCLAIMER*: I only tested this under Debian 7 and 8.
-The following command will download and execute the install script that will do all the work for you: `wget https://raw.githubusercontent.com/steilerDev/duplicati_helper/master/install.sh && chmod +x install.sh && ./install.sh && rm install.sh`
-
-## Manual installation
-In case the automatic installation does not work, or you don't trust my script, first install mono and duplicati according to the provided docs. My script should work within any shell. Currently the quiet mode only works if you have `gdb` installed.
-
-1. Clone the repository (suggested location: `/opt/duplicati_helper/`)
-2. Link binary: `ln -s /opt/duplicati_helper/duplicati /bin/duplicati`
-  * If you want to use the `quiet` workaround you need to install `gdb` and mono needs to have version 4.3.2.467, 4.4.x, or higher
-3. In case you want a shutdown delayed by running duplicati jobs, do the following:
-  * `mv /sbin/shutdown /sbin/shutdown-bin`
-  * `ln -s /opt/duplicati_helper/shutdown`
-  * Make sure the access rights to `/opt/duplicati_helper/shutdown` match `/sbin/shutdown-bin`
-4. In order to show the backup status during log-in on the console, include `source /opt/duplicati_helper/duplicatirc` in your `~/.bashrc` (or similiar depending on your bash)
-5. In case your system supports bash autocompletion and you want to use this feature for the duplicati script link the provided script to the auto completion directory: `ln -s /opt/duplicati_helper/duplicati_completion /etc/bash_completion.d/` (NOTE: Check if the linking was successfull using `. /etc/bash_completion`. You might be prompted an error, saying that there are to many levels of linkage. Just remove the link and re-link it again, this fixed it on my systems)
-6. Configure your general duplicati settings based on the provided example in `/opt/duplicati_helper/duplicati.conf.example`
-7. Configure your backups based on the provided example in `/opt/duplicati_helper/backup.conf.example`
-8. In order for the helper scripts to use your `duplicati.conf` file, you either need to move it to `/opt/duplicati_helper/duplicati.conf`, or you need to modify the second line (`source /opt/duplicati_helper/duplicati.conf`) of `duplicatirc`, `duplicati`, `duplicati_completion` and `shutdown`, pointing to your configuration path.

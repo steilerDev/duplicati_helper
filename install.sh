@@ -79,7 +79,7 @@ install_dependencies () {
 
 # This function installs the mono library, required to execute the application
 install_mono () {
-    echo -n "Adding mono to your apt sources (This might take a while because your local repository needs to be updated)..."
+    echo -n "Adding mono to your apt sources..."
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2> /dev/null
     sudo sh -c "echo \"deb http://download.mono-project.com/repo/debian wheezy main\" >> /etc/apt/sources.list.d/mono-xamarin.list"
     echo "Done"
@@ -87,6 +87,8 @@ install_mono () {
 
     echo "Installing mono with apt-get (This might take a while)..."
     sudo apt-get install -y mono-complete > /dev/null
+    sudo apt-get update > /dev/null
+    sudo apt-get install -y mono-devel mono-complete > /dev/null
     echo "...Done"
     echo
 }
@@ -325,7 +327,7 @@ set_config_value () {
     fi
     
     # Setting value, in order to make it avaiable in this script
-    eval "$1=$2"
+    eval "$1=\"$2\""
 }
 
 # This function will ask the user to specify a path
