@@ -7,6 +7,11 @@ source /opt/duplicati_helper/duplicati.conf
 ####
 
 main () { 
+    if [ "${@: -1}" = "quiet" ] ; then
+        # Making sure the script is really quiet
+        fdswap $$ "${LOG_PATH}${LOG_PREFIX}.cli.log"
+    fi
+
     if [ "$1" = "command" ] ; then
         ## Run duplicati with the provided arguments
             shift
@@ -258,8 +263,8 @@ duplicati_status () {
 # Arguments: The arguments of the initial run, if empty we assume that this is not an auto but manual update, exiting the application afterwards
 update_helper () {
     # Check for interactive shell
-    STDIN="$(readlink -f /proc/31489/fd/0)"
-    if [[ $STDIN == *"/dev/null"* ]] || [[ $STDIN == *"(deleted)"* ]] ; then
+    STDIN="$(readlink -f /proc/$$/fd/0)"
+    if [[ $STDIN == *"fd/pipe"* ]] || [[ $STDIN == *"/dev/null"* ]] || [[ $STDIN == *"(deleted)"* ]] ; then
         echo "No user interaction, postponing update"
         return
     fi
@@ -476,14 +481,19 @@ fdswap () {
     touch $dst
     (
         echo "attach $pid"
-        # Open Mode is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)
+        # Open Mode for new output is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)
         echo 'call open("'$dst'", 586, 0666)'
-        # Switch stdout
+        # Open mode for /dev/null input is (O_RDWR | O_APPEND | O_ASYNC | O_CREAT)
+        echo 'call open("/dev/null", 586, 0666)'
+        # Switch stdout to log file
         echo 'call dup2($1,1)'
-        # Switch stderr
+        # Switch stderr to log file
         echo 'call dup2($1,2)'
+        # Switch stdin to /dev/null
+        echo 'call dup2($2,0)'
         # Close file
         echo 'call close($1)'
+        echo 'call close($2)'
         echo 'detach' 
         echo 'quit'
     ) | sudo gdb -q -x - > /dev/null 2>&1
@@ -542,7 +552,7 @@ monitor_log() {
                         SIZE=$(echo "$TEMP" | grep -oP "[0-9]+\.?[0-9]*" | head -c 3)
                         # Checking if size ends on ".", if e.g. original size was 23.4 this would result in "23." which is not nice
                         if [[ $SIZE == *"." ]] ; then
-                            $SIZE=${SIZE:0:-1}
+                            SIZE=${SIZE:0:-1}
                         fi
                         # Extracting unit 
                         UNIT=$(echo $TEMP | grep -oP "[T|G|M|K]?[B|b]")
