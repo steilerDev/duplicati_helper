@@ -7,10 +7,14 @@
 DUPLICATI_PATH="/opt/duplicati/"
 DUPLICATI_HELPER_PATH="/opt/"
 
-SHUTDOWN_BIN=$(which shutdown)
+SHUTDOWN_BIN=""
 
 main () {
+    echo
+    echo "#######################################################################"
     echo "Welcome to the installer for mono, duplicati and the duplicati helpers!"
+    echo "#######################################################################"
+    echo "Made with <3 by steilerDev"
     echo
 
     check_root 
@@ -26,6 +30,7 @@ main () {
     echo "Made by steilerDev (https://github.com/steilerDev/)"
     echo "For support and information go to https://github.com/steilerdev/duplicati_helper/"
     echo "Licensed under a GNU General Public License, Version 3"
+    exit 0
 }
 
 # This function checks if the current user has sudo rights
@@ -49,21 +54,22 @@ check_dependencies () {
     echo
     echo "Checking dependencies..."
     MISSING_DEP=""
-    for dep in wget git gdb
+    for dep in wget git gdb curl unzip
     do
         if ! which $dep > /dev/null ; then
             echo "$dep not installed!"
-            MISSING_DEP="$MISSING_DEP $dep"
+            MISSING_DEP+="$dep "
         fi
     done
-
-    yes_no "Do you want to install the missing dependiencies ($MISSING_DEP). Not installing these dependiencies might result in unexpected behaviour of the appliction." 1 "install_dependencies" 
+    if [ ! -z "$MISSING_DEP" ] ; then
+        yes_no "Do you want to install the missing dependiencies ($MISSING_DEP). Not installing these dependiencies might result in unexpected behaviour of the appliction." 1 "install_dependencies" 
+    fi
     echo    
 }
 
 install_dependencies () {
     if [ ! -z "$MISSING_DEP" ] ; then
-        echo "Installing missing dependencies using apt-get..."
+        echo "Installing missing dependencies using apt-get (This might take a while)..."
         sudo apt-get -y install $MISSING_DEP > /dev/null
         echo "...Done"
     else
@@ -75,12 +81,14 @@ install_dependencies () {
 install_mono () {
     echo -n "Adding mono to your apt sources..."
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2> /dev/null
-    echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
+    sudo sh -c "echo \"deb http://download.mono-project.com/repo/debian wheezy main\" >> /etc/apt/sources.list.d/mono-xamarin.list"
     echo "Done"
     echo
 
-    echo "Installing mono with apt-get..."
+    echo "Installing mono with apt-get (This might take a while)..."
     sudo apt-get install -y mono-complete > /dev/null
+    sudo apt-get update > /dev/null
+    sudo apt-get install -y mono-devel mono-complete > /dev/null
     echo "...Done"
     echo
 }
@@ -98,14 +106,14 @@ install_duplicati () {
     echo "Done"
     echo
 
-    echo -n "Getting latest Duplicati release..."
+    echo -n "Getting latest Duplicati release (This might take a while)..."
     sudo wget $DUPLICATI_URL -O $DUPLICATI_TEMP > /dev/null 2>&1
     echo "Done"
     echo 
 
     echo -n "Installing latest Duplicati release..."
     sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
-    rm -rf $DUPLICATI_TEMP
+    sudo rm -f $DUPLICATI_TEMP
     echo "Done"
     echo
 }
@@ -123,8 +131,8 @@ install_duplicati_helper () {
     echo
     
     echo -n "Duplicating config files from templates..."
-    cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
-    cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
+    sudo cp ${DUPLICATI_HELPER_PATH}/duplicati.conf.example ${DUPLICATI_HELPER_PATH}/duplicati.conf
+    sudo cp ${DUPLICATI_HELPER_PATH}/backup.conf.example ${DUPLICATI_HELPER_PATH}/backup.conf
     echo "Done"
 
     if yes_no "Do you want to install the 'duplicati' script?" 1 ; then
@@ -136,20 +144,24 @@ install_duplicati_helper () {
 
     if yes_no "Do you want the shutdown delayed, in case a backup job is running?" 1 ; then
         echo -n "Installing shutdown script..."
-        sudo mv $SHUTDOWN_BIN ${SHUTDOWN_BIN}-bin
-        sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
-        set_config_value "FP_SHUTDOWN" "$(stat -c "%a" ${SHUTDOWN_BIN}-bin)" "The file permissions, retrieved from the original shutdown binary (${SHUTDOWN_BIN}-bin)"
-        sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
-        sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
-        SHUTDOWN_BIN=${SHUTDOWN_BIN}-bin
-        echo "Done"
+        SHUTDOWN_BIN=$(sudo which shutdown)
+        if [ -z "$SHUTDOWN_BIN" ] ; then
+            echo "Unable to find shutdown binary, unable to install shutdown delay!"
+        else
+            sudo mv "$SHUTDOWN_BIN" "${SHUTDOWN_BIN}-bin"
+            sudo ln -s ${DUPLICATI_HELPER_PATH}/shutdown $SHUTDOWN_BIN
+            set_config_value "FP_SHUTDOWN" "$(stat -c "%a" ${SHUTDOWN_BIN}-bin)" "The file permissions, retrieved from the original shutdown binary (${SHUTDOWN_BIN}-bin)"
+            sudo chown --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
+            sudo chmod --reference=${SHUTDOWN_BIN}-bin ${DUPLICATI_HELPER_PATH}/shutdown
+            SHUTDOWN_BIN=${SHUTDOWN_BIN}-bin
+            echo "Done"
+        fi
     fi
     echo 
 
     if yes_no "Do you want to see the backup status upon login?" 1 ; then
         echo -n "Adding status script to '.bashrc'..."
-        echo "## See the status of current and past duplicati backup jobs" >> $HOME/.bashrc
-        echo "source ${DUPLICATI_HELPER_PATH}/duplicatirc" >> $HOME/.bashrc
+        sudo sh -c "echo \"source ${DUPLICATI_HELPER_PATH}/duplicatirc\" >> $HOME/.bashrc"
         echo "Done"
     fi
     echo
@@ -166,13 +178,13 @@ install_duplicati_helper () {
         fi 
 
         if [ -d /etc/bash_completion.d/ ] ; then
-           ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion
+           sudo ln -s ${DUPLICATI_HELPER_PATH}/duplicati_completion /etc/bash_completion.d/duplicati_completion
         else
             echo "!!!!!!!!"
             echo "Unable to link file, '/etc/bash_completion.d' does not exist"
             echo "!!!!!!!!"
         fi
-        echo "Please make sure you have bash_completion activated in your '/etc/bash.bashrc' or '~/.bashrc' (you need the line '. /etc/bash_completion' in at least on of these files"
+        echo "    Please make sure you have bash_completion activated in your '/etc/bash.bashrc' or '~/.bashrc' (you need the line '. /etc/bash_completion' in at least on of these files"
         echo "...Done"
     fi
     echo
@@ -180,7 +192,7 @@ install_duplicati_helper () {
 
     echo -n "Fixing -eventually broken- references to config file..."
     for f in duplicati duplicatirc duplicati_completion shutdown; do
-        sudo sed -i '/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
+        sudo sed -i '0,/duplicati.conf/c\source '"${DUPLICATI_HELPER_PATH}"'/duplicati.conf' $f
     done
     echo "Done"
 }
@@ -245,17 +257,17 @@ config_duplicati_helper () {
 }
 
 set_permissions () {
-    source "${DUPLICATI_HELPER_PATH}/duplicati.conf"
     if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
         echo -n "Setting permissions..."
-        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
-        chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
-        chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
-        chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf
-        chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion
-        chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc
-        chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh
-        chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown
+
+        sudo chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} ${DUPLICATI_HELPER_PATH}
+        sudo chmod $FP_BACKUP_CONF ${DUPLICATI_HELPER_PATH}/backup.conf
+        sudo chmod $FP_DUPLICATI ${DUPLICATI_HELPER_PATH}/duplicati
+        sudo chmod $FP_DUPLICATI_CONF ${DUPLICATI_HELPER_PATH}/duplicati.conf
+        sudo chmod $FP_DUPLICATI_COMPLETION ${DUPLICATI_HELPER_PATH}/duplicati_completion
+        sudo chmod $FP_DUPLICATIRC ${DUPLICATI_HELPER_PATH}/duplicatirc
+        sudo chmod $FP_INSTALL ${DUPLICATI_HELPER_PATH}/install.sh
+        sudo chmod $FP_SHUTDOWN ${DUPLICATI_HELPER_PATH}/shutdown
         echo "Done"
     fi
 }
@@ -298,19 +310,24 @@ config_duplicati_helper_item () {
 # $4 Comment for the key-value pair, in case entry did not exist yet (optional)
 set_config_value () {
     CONFIGFILE="${DUPLICATI_HELPER_PATH}/duplicati.conf"
-    touch $CONFIGFILE
+    if [ ! -e "$CONFIGFILE" ] ; then
+        sudo touch $CONFIGFILE
+    fi
     
     if grep -q $1 $CONFIGFILE ; then
         sudo sed -i '/'"$1"'/c\'"$1"'="'"$2"'"' $CONFIGFILE
     else
         if [ ! -z "$3" ] ; then
-            echo "# $3" >> $CONFIGFILE
+            sudo sh -c "echo \"# $3\" >> $CONFIGFILE"
         fi
         if [ ! -z "$4" ] ; then
-            echo "# $4" >> $CONFIGFILE
+            sudo sh -c "echo \"# $4\" >> $CONFIGFILE"
         fi
-        echo "$1=\"$2\"" >> $CONFIGFILE
+        sudo sh -c "echo \"$1=\\\"$2\\\"\" >> $CONFIGFILE"
     fi
+    
+    # Setting value, in order to make it avaiable in this script
+    eval "$1=\"$2\""
 }
 
 # This function will ask the user to specify a path
@@ -360,10 +377,6 @@ yes_no () {
         esac
     done
     return 0;
-}
-
-test () {
-    echo "Works"
 }
 
 main $@

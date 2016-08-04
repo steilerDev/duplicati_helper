@@ -286,17 +286,18 @@ update_helper () {
             echo "Changelog:" 
             git --no-pager log $LOCAL..$REMOTE --pretty=format:'  %ci: %s <by %cn>' --abbrev-commit
             echo
+            echo
             while true ; do
                 read -p "Do you want to update the helper now? (Make sure you change settings files as advised in changelog) [y/n]: " yn
                 case $yn in
                     [Yy]* )
-                        echo -n "Updating..."
+                        echo "Updating..."
                         git pull > /dev/null 2> /dev/null
                         # Correcting permissions, messed up by pull
                         set_permissions                         
                         cd $CURRENT_DIR
                         if [ $# -eq 0 ]; then
-                            echo "done, your helper is now up-to-date!"
+                            echo "Your helper is now up-to-date!"
                             exit_duplicati 0 "update"                            
                         else
                             echo "done, restarting helper now!"
