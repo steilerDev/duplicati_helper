@@ -528,7 +528,7 @@ monitor_log() {
             fi
 
             # Checking for mode change
-            echo "$line" | grep -e "Checking remote backup ..." -e "Scanning local files ..." -e "Verifying remote backup ..." -e "Re-creating missing index file"
+            echo "$line" | grep -q -e "Checking remote backup ..." -e "Scanning local files ..." -e "Verifying remote backup ..." -e "Re-creating missing index file"
             if [ $? = 0 ] ; then
                 if [[ "$line" == *"Checking remote backup ..."* ]] ; then
                     MODE="Remote backup chk"
