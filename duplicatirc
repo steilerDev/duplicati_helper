@@ -6,6 +6,7 @@ source /opt/duplicati_helper/duplicati.conf
 # backup since the last log on. 
 # The status width is limited to 80 characters
 ####
+alias duplicati_status="$DUPLICATIRC"
 
 # Set duplicati update policy
 export AUTOUPDATER_Duplicati_POLICY=$DUPLICATI_UPDATE_POLICY
