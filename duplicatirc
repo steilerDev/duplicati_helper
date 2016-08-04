@@ -71,10 +71,9 @@ printRunningDuplicati () {
                 STATUS_FILE="${PID_DIR}status.${DUPLICATI_PID_PREFIX}.$JOB_NAME"
 
                 # Print running jobs, with status (if available)
+                printLine "#" $JOB_NAME $JOB_DATE "Running"
                 if [ -e "${STATUS_FILE}" ] ; then
-                    printLine "#" $JOB_NAME $JOB_DATE "$(cat "${STATUS_FILE}")"
-                else
-                    printLine "#" $JOB_NAME $JOB_DATE "running"
+                    printLine "#" "#" "#" "$(cat "${STATUS_FILE}")"
                 fi
 
                 # Print a second line, containing usage information about running jobs
