@@ -2,8 +2,6 @@ import urllib
 
 class Widget(object):
 
-    """ String Widget """
-
     def __init__(self, screen, ref, wtype):
         
         self.screen = screen
@@ -19,8 +17,12 @@ class Widget(object):
             self.lastRequest = request
             self.screen.server.request(request)
     
-    def update(self):
-        return        
+    def update(self, request):
+        if self.lastRequest != request:
+            self.lastRequest = request
+
+            print "Updating widget: " + request
+            self.screen.server.request(request)
 
 class StringWidget(Widget):
 
@@ -30,43 +32,37 @@ class StringWidget(Widget):
         self.y = y
         self.text = text
         
-        super(StringWidget, self).__init__(screen, ref, "string")
+        Widget.__init__(self, screen, ref, "string")
    
     def update(self):
-        self.update_command('widget_set %s %s %s %s "%s"' % (self.screen.ref, self.ref, self.x, self.y, self.text))
+        Widget.update(self, 'widget_set %s %s %s %s "%s"' % (self.screen.ref, self.ref, self.x, self.y, self.text))
  
     def set_x(self, x):
-        
         self.x = x
         self.update()
                                    
     
     def set_y(self, y):
-        
         self.y = y
         self.update()
         
     
     def set_text(self, text):
-        
         self.text = text
         self.update()             
         
         
 class TitleWidget(Widget):
     
-    """ Title Widget """
-    
     def __init__(self, screen, ref, text="Title"):
         self.text = text
-        super(TitleWidget, self).__init__(screen, ref, "title")
+        TitleWidget.__init__(self, screen, ref, "title")
 
         
     def update(self):
-        self.update_command('widget_set %s %s "%s"' % (self.screen.ref, self.ref, self.text))
+        Widget.update(self, 'widget_set %s %s "%s"' % (self.screen.ref, self.ref, self.text))
 
     def set_text(self, text):
-        
         self.text = text
         self.update()            
         
@@ -74,29 +70,24 @@ class TitleWidget(Widget):
 class HBarWidget(Widget):
     
     def __init__(self, screen, ref, x=1, y=1, length=10):
-        
         self.x = x
         self.y = y
         self.length = length
 
-        super(HBarWidget, self).__init__(screen, ref, "hbar")
+        Widget.__init__(self, screen, ref, "hbar")
         
     def update(self):
-        
-        self.screen.server.request("widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.length))
+        Widget.update(self, "widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.length))
 
     def set_x(self, x):
-        
         self.x = x
         self.update()
                                    
     def set_y(self, y):
-        
         self.y = y
         self.update()
         
     def set_length(self, length):
-        
         self.length = length
         self.update()          
         
@@ -104,29 +95,24 @@ class HBarWidget(Widget):
 class VBarWidget(Widget):
     
     def __init__(self, screen, ref, x=1, y=1, length=10):
-        
         self.x = x
         self.y = y
         self.length = length
 
-        super(VBarWidget, self).__init__(screen, ref, "vbar")
+        Widget.__init__(self, screen, ref, "vbar")
         
     def update(self):
-        
-        self.screen.server.request("widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.length))
+        Widget.update(self, "widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.length))
 
     def set_x(self, x):
-        
         self.x = x
         self.update()
                                    
     def set_y(self, y):
-        
         self.y = y
         self.update()
         
     def set_length(self, length):
-        
         self.length = length
         self.update()           
         
@@ -134,29 +120,23 @@ class VBarWidget(Widget):
 class IconWidget(Widget):
     
     def __init__(self, screen, ref, x=1, y=1, name="heart"):
-        
-        self.x = x
         self.y = y
         self.name = name
 
-        super(IconWidget, self).__init__(screen, ref, "icon")
+        Widget.__init__(self, screen, ref, "icon")
         
     def update(self):
-        
-        self.screen.server.request("widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.name))
+        Widget.update(self, "widget_set %s %s %s %s %s" % (self.screen.ref, self.ref, self.x, self.y, self.name))
 
     def set_x(self, x):
-        
         self.x = x
         self.update()
                                    
     def set_y(self, y):
-        
         self.y = y
         self.update()
         
     def set_name(self, name):
-        
         self.name = name
         self.update()        
         
@@ -172,11 +152,10 @@ class ScrollerWidget(Widget):
         self.speed = speed
         self.text = text
 
-        super(ScrollerWidget, self).__init__(screen, ref, "scroller")
+        Widget.__init__(self, screen, ref, "scroller")
         
     def update(self):
-        
-        self.screen.server.request('widget_set %s %s %s %s %s %s %s %s "%s"' % (self.screen.ref, 
+        Widget.update(self, 'widget_set %s %s %s %s %s %s %s %s "%s"' % (self.screen.ref, 
                                                                   self.ref, 
                                                                   self.left, 
                                                                   self.top, 
@@ -187,37 +166,30 @@ class ScrollerWidget(Widget):
                                                                   self.text))
 
     def set_left(self, left):
-        
         self.left = left
         self.update()
                                    
     def set_top(self, top):
-        
         self.top = top
         self.update()
         
     def set_right(self, right):
-        
         self.right = right
         self.update()   
         
     def set_bottom(self, bottom):
-        
         self.bottom = bottom
         self.update()       
         
     def set_direction(self, direction):
-        
         self.direction = direction
         self.update() 
         
     def set_speed(self, speed):
-        
         self.speed = speed
         self.update()     
         
     def set_text(self, text):
-        
         self.text = text
         self.update()
         
@@ -235,11 +207,10 @@ class FrameWidget(Widget):
         self.direction = direction
         self.speed = speed
 
-        super(FrameWidget, self).__init__(screen, ref, "frame")
+        Widget.__init__(self, screen, ref, "frame")
         
     def update(self):
-        
-        self.screen.server.request('widget_set %s %s %s %s %s %s %s %s %s %s' % (self.screen.ref, 
+        Widget.update(self, 'widget_set %s %s %s %s %s %s %s %s %s %s' % (self.screen.ref, 
                                                                   self.ref, 
                                                                   self.left, 
                                                                   self.top, 
@@ -251,42 +222,34 @@ class FrameWidget(Widget):
                                                                   self.speed))
 
     def set_left(self, left):
-        
         self.left = left
         self.update()
                                    
     def set_top(self, top):
-        
         self.top = top
         self.update()
         
     def set_right(self, right):
-        
         self.right = right
         self.update()   
         
     def set_bottom(self, bottom):
-        
         self.bottom = bottom
         self.update()       
 
     def set_width(self, width):
-        
         self.width = width
         self.update()
         
     def set_height(self, height):
-        
         self.height = height
         self.update()                      
         
     def set_direction(self, direction):
-        
         self.direction = direction
         self.update() 
         
     def set_speed(self, speed):
-        
         self.speed = speed
         self.update()     
                                           
@@ -294,25 +257,21 @@ class FrameWidget(Widget):
 class NumberWidget(Widget):
     
     def __init__(self, screen, ref, x=1, value=1):
-        
         self.x = x
         self.value = value
         
-        super(NumberWidget, self).__init__(screen, ref, "num")
+        Widget.__init__(self, screen, ref, "num")
         
     def update(self):
-        
-        self.screen.server.request('widget_set %s %s %s %s' % (self.screen.ref, 
+        Widget.update(self, 'widget_set %s %s %s %s' % (self.screen.ref, 
                                                                self.ref, 
                                                                self.x,
                                                                self.value))
 
     def set_x(self, x):
-        
         self.x = x
         self.update()
                                    
     def set_value(self, value):
-        
         self.value = value
         self.update()                                                                         

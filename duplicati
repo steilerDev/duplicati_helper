@@ -30,6 +30,9 @@ main () {
     elif [ "$1" = "update" ] ; then
         ## Update the helper
             update_helper
+    elif [ "$1" = "permissions" ] ; then
+        ## Setting permissions
+            set_permissions
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
