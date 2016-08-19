@@ -1,19 +1,20 @@
 from screen import Screen
-from duplicati_widget import JobNameWidget
+from duplicati_widgets import JobNameWidget, JobStatusWidget, JobUsageWidget
+from widgets import TitleWidget
 
-class BackupScreen(Screen)
+class BackupScreen(Screen):
 
-    def __init__(self, server, ref, backup_name)
+    def __init__(self, server, ref, backup_name):
         super(BackupScreen, self).__init__(server, ref)
         self.backup_name = backup_name
 
         ## Add title
-        self.add_widget(TitleWidget(self, ref="Title", text="steilerGroup-HomeServer"
+        self.add_widget(TitleWidget(screen=self, ref="Title", text="steilerGroup-HomeServer"))
         ## Create job widget
-        self.add_widget(JobNameWidget(self.screen, "JobNameWidget", self.backup_name, 2))
+        self.add_widget(JobNameWidget(screen=self, ref="JobNameWidget", job_name=self.backup_name, y=2))
 
         ## Create job status widget
-        self.add_widget(JobStatusWidget(self.screen, "JobStatusWidget", self.backup_name, 3))
+        self.add_widget(JobStatusWidget(screen=self, ref="JobStatusWidget", job_name=self.backup_name, y=3))
 
         ## Create job usage widget
-        self.add_widget(JobUsageWidget(self.screen, "JobUsageWidget", self.backup_name, 4))
+        self.add_widget(JobUsageWidget(screen=self, ref="JobUsageWidget", job_name=self.backup_name, y=4))

@@ -150,5 +150,5 @@ class Screen(object):
         del(self.widgets[ref])
 
     def update(self):
-        for widget in self.widgets.iteritems():
+        for ref, widget in self.widgets.iteritems():
             widget.update() 

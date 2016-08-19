@@ -56,9 +56,8 @@ class TitleWidget(Widget):
     
     def __init__(self, screen, ref, text="Title"):
         self.text = text
-        TitleWidget.__init__(self, screen, ref, "title")
+        Widget.__init__(self, screen, ref, "title")        
 
-        
     def update(self):
         Widget.update(self, 'widget_set %s %s "%s"' % (self.screen.ref, self.ref, self.text))
 
