@@ -208,6 +208,20 @@ run_duplicati () {
     success=$?
     rm ${THIS_DUPLICATI_PID}
 
+    if [ -z $retry && $success = 100 && "$1" = "backup" ] ; then
+        retry="true"
+        success = $(run_duplicati repair $2 $3)
+        echo "Retrying with repair"
+    fi
+
+    if [ ! -z $retry && "$1" = "repair" ] ; then
+        return run_duplicati backup $2 $3
+    fi
+    
+    if [ ! -z $retry && "$1" = "backup" ] ; then
+        return $success
+    fi
+
     exit_duplicati $success $1 ${name}
 }
 
