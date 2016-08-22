@@ -215,7 +215,10 @@ run_duplicati () {
     fi
 
     if [ ! -z $retry && "$1" = "repair" ] ; then
-        return run_duplicati backup $2 $3
+        if [ $success = 0 ] ; then
+            return run_duplicati backup $2 $3
+        else
+            return $success
     fi
     
     if [ ! -z $retry && "$1" = "backup" ] ; then
