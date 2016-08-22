@@ -117,3 +117,7 @@ class Server(object):
             "cell_width", "cell_height"
         """
         return self.server_info
+    
+    def update(self):
+        for key in self.screens:
+            self.screens[key].update()
