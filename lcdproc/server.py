@@ -44,6 +44,7 @@ class Server(object):
         
         self.tn.write((command_string + "\n").encode())
         if self.debug: print "Telnet Request:  %s" % (command_string)
+        #print "Telnet Request:  %s" % (command_string)
         while True:
             response = urllib.unquote(self.tn.read_until(b"\n").decode())
             if "success" in response:   # Normal successful reply

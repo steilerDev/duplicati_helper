@@ -5,12 +5,13 @@ from widgets import TitleWidget
 class BackupScreen(Screen):
 
     def __init__(self, server, ref, backup_name, width=20, height=4, heartbeat="off"):
-        super(BackupScreen, self).__init__(server, ref)
+        Screen.__init__(self, server, ref)
         self.backup_name = backup_name
         
         self.set_heartbeat(heartbeat)
         self.set_width(width)
         self.set_height(height)
+        self.set_duration(3)
 
         ## Add title
         self.add_widget(TitleWidget(screen=self, ref="Title", text=self.backup_name))
@@ -23,13 +24,21 @@ class BackupScreen(Screen):
         ## Create job usage widget
         self.add_widget(UsageWidget(screen=self, ref="JobUsageWidget", job_name=self.backup_name, y=4))
 
+    def update(self):
+        if self.widgets["JobStatusWidget"].running:
+            self.set_duration(8)
+        else:
+            self.set_duration(3)
+        Screen.update(self)
+
 class OverviewScreen(Screen):
 
     def __init__(self, server, ref, width=20, height=4, heartbeat="off"):
-        super(OverviewScreen, self).__init__(server, ref)
+        Screen.__init__(self, server, ref)
         self.set_heartbeat(heartbeat)
         self.set_width(width)
         self.set_height(height)
+        self.set_duration(8)
 
         self.add_widget(TitleWidget(screen=self, ref="Title", text="steilerGroup-HS"))
         self.add_widget(ShutdownWidget(screen=self, ref="ShutdownWidget", y=2))

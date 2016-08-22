@@ -23,6 +23,7 @@ class JobStatusWidget(ScrollerWidget):
 
     def __init__(self, screen, ref, job_name, y): 
         self.job_name = job_name
+        self.running = False
     
         ScrollerWidget.__init__(self, screen, ref, text="Backup Status", top=y)
 
@@ -34,6 +35,7 @@ class JobStatusWidget(ScrollerWidget):
                 status_file.close()
             else:
                 self.text = "Job running"
+            self.running = True
         elif os.path.isfile("/opt/duplicati_helper/backup.status"):
             status_file = open("/opt/duplicati_helper/backup.status")
             found_entry = False
@@ -47,8 +49,10 @@ class JobStatusWidget(ScrollerWidget):
                     self.text = ' '.join(status_array).rstrip()
             if not found_entry:
                 self.text = "No status available"
+            self.running = False
         else:
             self.text = "No status available"
+            self.running = False
         ScrollerWidget.update(self)
 
 class UsageWidget(StringWidget):
