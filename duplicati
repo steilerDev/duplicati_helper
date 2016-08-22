@@ -219,6 +219,7 @@ run_duplicati () {
             return run_duplicati backup $2 $3
         else
             return $success
+        fi
     fi
     
     if [ ! -z $retry && "$1" = "backup" ] ; then
@@ -320,7 +321,7 @@ update_helper () {
                             echo "Your helper is now up-to-date!"
                             exit_duplicati 0 "update"                            
                         else
-                            echo "done, restarting helper now!"
+                            echo "...Done, restarting helper now!"
                             exec $0 $@
                             exit
                         fi ;;
