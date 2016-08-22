@@ -219,6 +219,7 @@ run_duplicati () {
             return run_duplicati backup $2 $3
         else
             return $success
+        fi
     fi
     
     if [ ! -z $retry && "$1" = "backup" ] ; then
