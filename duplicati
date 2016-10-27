@@ -7,6 +7,9 @@ source /opt/duplicati_helper/duplicati.conf
 ####
 
 main () { 
+
+
+
     if [ "${@: -1}" = "quiet" ] ; then
         # Making sure the script is really quiet
         fdswap $$ "${LOG_PATH}${LOG_PREFIX}.cli.log"
@@ -122,6 +125,8 @@ run_duplicati () {
     # 5) Set log settings
     THIS_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.log"
     THIS_CLI_LOG_PATH="${LOG_PATH}${LOG_PREFIX}.${name}.cli.log"
+    savelog -q "${LOG_PATH}${LOG_PREFIX}.${name}.log"
+    savelog -q "${LOG_PATH}${LOG_PREFIX}.${name}.cli.log"
     DUPLICATI_CMD+=" --log-file=\"${THIS_LOG_PATH}\"" 
 
     ############################################################################
