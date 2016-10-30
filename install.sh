@@ -161,7 +161,7 @@ install_duplicati_helper () {
 
     if yes_no "Do you want to see the backup status upon login?" 1 ; then
         echo -n "Adding status script to '.bashrc'..."
-        sudo sh -c "echo \"source ${DUPLICATI_HELPER_PATH}/duplicatirc\" >> $HOME/.bashrc"
+        sudo sh -c "echo \"if [ -e ${DUPLICATI_HELPER_PATH}/duplicatirc ] ; then source ${DUPLICATI_HELPER_PATH}/duplicatirc; fi\" >> $HOME/.bashrc"
         echo "Done"
     fi
     echo
