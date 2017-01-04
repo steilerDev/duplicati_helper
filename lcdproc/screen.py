@@ -1,3 +1,4 @@
+import logging
 from widgets import StringWidget, TitleWidget, HBarWidget, VBarWidget, IconWidget, ScrollerWidget, FrameWidget,NumberWidget
 
 
@@ -77,7 +78,7 @@ class Screen(object):
 
         """ Set Screen Change Interval Duration """
         if duration > 0 and self.duration != duration:
-            print "Updating duration: " + str(duration)
+            logging.info('Screen (%s): Updating duration %i', self.ref, duration)
             self.duration = duration
             self.server.request("screen_set %s duration %i" % (self.ref, (self.duration * 8)))
 

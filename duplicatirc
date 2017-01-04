@@ -9,7 +9,7 @@ source /opt/duplicati_helper/duplicati.conf
 alias duplicati_status="$DUPLICATIRC"
 
 # Set duplicati update policy
-export AUTOUPDATER_Duplicati_POLICY=$DUPLICATI_UPDATE_POLICY
+export AUTOUPDATER_DUPLICATI_POLICY=$DUPLICATI_UPDATE_POLICY
 
 # Some global variables required for duplicati
     DUPLICATI_PIDS="${PID_DIR}${DUPLICATI_PID_PREFIX}.*"

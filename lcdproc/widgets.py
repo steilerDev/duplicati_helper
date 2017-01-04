@@ -1,4 +1,5 @@
 import urllib
+import logging
 
 class Widget(object):
 
@@ -9,19 +10,15 @@ class Widget(object):
         self.wtype = wtype
         self.lastRequest = ""
 
+        logging.debug('Widget (%s): Creating widget...', self.ref)
         self.screen.server.request("widget_add %s %s %s" % (self.screen.ref, self.ref, self.wtype))
         self.update()
 
-    def update_command(self, request):
-        if self.lastRequest != request:
-            self.lastRequest = request
-            self.screen.server.request(request)
-    
     def update(self, request):
         if self.lastRequest != request:
             self.lastRequest = request
 
-            print "Updating widget: " + request
+            logging.debug('Widget (%s): Updating widget: %s', self.ref, request)
             self.screen.server.request(request)
 
 class StringWidget(Widget):
