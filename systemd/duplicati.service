@@ -1,0 +1,6 @@
+[Unit]
+Description=Duplicati Backup Service
+
+[Service]
+Type=simple
+ExecStart=/bin/duplicati
