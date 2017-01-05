@@ -3,4 +3,5 @@ Description=Duplicati Backup Service
 
 [Service]
 Type=simple
-ExecStart=/bin/duplicati
+User=root
+ExecStart=/bin/duplicati backup root
