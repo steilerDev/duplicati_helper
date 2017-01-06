@@ -1,7 +1,0 @@
-[Unit]
-Description=Duplicati Backup Service
-
-[Service]
-Type=simple
-User=root
-ExecStart=/bin/duplicati backup root

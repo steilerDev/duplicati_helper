@@ -1,0 +1,11 @@
+# This file should be copied to /etc/systemd/system/, in order to be activated & modified for each service
+[Unit]
+Description=Run the %i backup job every 7 days
+
+[Timer]
+OnUnitActiveSec=7d
+RandomizedDelaySec=1h
+Unit=duplicati@%i.service
+
+[Install]
+WantedBy=multi-user.target
