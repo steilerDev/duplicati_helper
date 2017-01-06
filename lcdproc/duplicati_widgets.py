@@ -91,9 +91,9 @@ class UsageWidget(StringWidget):
                logging.error('UsageWidget (%s): Unable to get usage for duplicati process', self.ref)
                self.text = "No usage available"        
         else:
-            if self.process != None:
-                logging.info('UsageWidget (%s): Deleting process object, since process is no longer running', self.ref)
-                del(self.process)
+#            if self.process != None:
+#                logging.info('UsageWidget (%s): Deleting process object, since process is no longer running', self.ref)
+#                del(self.process)
             if os.path.isfile("/opt/duplicati_helper/backup.status"):
                 logging.info('UsageWidget (%s): Getting last backup status', self.ref)
                 status_file = open("/opt/duplicati_helper/backup.status")

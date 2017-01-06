@@ -8,8 +8,6 @@ source /opt/duplicati_helper/duplicati.conf
 
 main () { 
 
-
-
     if [[ "${@: -1}" = "quiet" ]] ; then
         # Making sure the script is really quiet
         fdswap $$ "${LOG_PATH}${LOG_PREFIX}.cli.log"

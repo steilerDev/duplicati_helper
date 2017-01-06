@@ -11,7 +11,7 @@ from duplicati_screen import BackupScreen, OverviewScreen
 def main():
 
     # filename='myapp.log'
-    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.WARNING)
+    logging.basicConfig(filename='/var/log/duplicati.lcdproc.log', format='%(asctime)s %(message)s', level=logging.WARNING)
 
     lcd = Server()
     lcd.start_session()
