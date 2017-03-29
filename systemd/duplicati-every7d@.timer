@@ -3,7 +3,8 @@
 Description=Run the %i backup job every 7 days
 
 [Timer]
-OnUnitActiveSec=7d
+OnCalendar=Mon
+Persistent=true
 RandomizedDelaySec=1h
 Unit=duplicati@%i.service
 

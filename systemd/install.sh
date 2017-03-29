@@ -13,7 +13,7 @@ setInterval () {
     echo "# Configuration: $1"
     echo "#####################################"
     PS3="Please select interval for '${1}': "
-    options=("Daily at 3am" "Every 3 days" "Every 7 days" "Never")
+    options=("Daily at 3am" "Every 3 days" "Every 5 days" "Every 7 days" "Never")
     select opt in "${options[@]}" ; do
         case $opt in
             "Daily at 3am")
@@ -28,6 +28,13 @@ setInterval () {
                 ln -s /opt/duplicati_helper/systemd/duplicati-every3d@.timer /etc/systemd/system/multi-user.target.wants/duplicati-every3d@${1}.timer
                 systemctl daemon-reload
                 systemctl start duplicati-every3d@${1}.timer 
+                break
+                ;;
+            "Every 5 days")
+                echo "Installing timer for '$1' config: Every 5 days..."
+                ln -s /opt/duplicati_helper/systemd/duplicati-every5d@.timer /etc/systemd/system/multi-user.target.wants/duplicati-every5d@${1}.timer
+                systemctl daemon-reload
+                systemctl start duplicati-every5d@${1}.timer 
                 break
                 ;;
             "Every 7 days")

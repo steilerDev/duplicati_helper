@@ -30,7 +30,7 @@ main () {
             duplicati_status $2
     elif [ "$1" = "update" ] ; then
         ## Update the helper
-            update_helper
+            update
     elif [ "$1" = "permissions" ] ; then
         ## Setting permissions
             set_permissions
@@ -283,15 +283,65 @@ duplicati_status () {
     exit_duplicati 1 "status"
 }
 
-# This function checks if there is an update available for the helper and installs the update
-# Arguments: The arguments of the initial run, if empty we assume that this is not an auto but manual update, exiting the application afterwards
-update_helper () {
+update () {
     # Check for interactive shell
     STDIN="$(readlink -f /proc/$$/fd/0)"
     if [[ $STDIN == *"fd/pipe"* ]] || [[ $STDIN == *"/dev/null"* ]] || [[ $STDIN == *"(deleted)"* ]] ; then
         echo "No user interaction, postponing update"
         return
     fi
+
+    update_helper
+    update_duplicati
+    exit_duplicati 1 "update"
+}
+
+update_duplicati () {
+    # Get current duplicati version
+    echo -n "Checking for duplicati updates..."
+    CURRENT_VERSION=$($DUPLICATI | grep -ohE "Version:  - .*$" | sed 's/Version:  \- //g')
+    LATEST_VERSION=$(curl -s https://api.github.com/repos/duplicati/duplicati/releases | grep "\"name\":" | grep -ohE "\"v.*\",$" | sed 's/\(\"v\|\",\)//g' | head -n 1)
+    if [ "$CURRENT_VERSION" == "$LATEST_VERSION" ] ; then
+        echo "current version ($CURRENT_VERSION) is already latest version ($LATEST_VERSION)!"
+        return
+    else
+        echo "found new version ($CURRENT_VERSION vs. $LATEST_VERSION), installing..."
+        CURRENT_DIR=$(pwd)
+        DUPLICATI_DIR=$(echo $DUPLICATI | sed 's/\(mono \|Duplicati.CommandLine.exe\)//g')
+        DUPLICATI_TEMP="new_duplicati.zip"
+        DUPLICATI_TEMP_DIR="old_duplicati"
+        cd $DUPLICATI_DIR
+
+        echo -n "Getting URL for latest Duplicati release..."
+        DUPLICATI_URL="$(curl -s https://api.github.com/repos/duplicati/duplicati/releases | grep browser_download_url | grep -P '(?<!-signatures).zip' | head -n 1 | cut -d '"' -f 4)"
+        echo "Done"
+        echo
+
+        echo -n "Moving current installation out of the way..."
+        cd ..
+        mv $DUPLICATI_DIR $DUPLICATI_TEMP_DIR
+        mkdir $DUPLICATI_DIR
+        cd $DUPLICATI_DIR
+        echo "Done"
+
+        echo -n "Getting latest Duplicati release (This might take a while)..."
+        sudo wget $DUPLICATI_URL -O $DUPLICATI_TEMP > /dev/null 2>&1
+        echo "Done"
+        echo
+
+        echo -n "Installing latest Duplicati release..."
+        sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
+        sudo rm -f $DUPLICATI_TEMP
+        cd ..
+        sudo rm -rf $DUPLICATI_TEMP_DIR
+        echo "Done"
+        cd $CURRENT_DIR
+    fi
+}
+
+# This function checks if there is an update available for the helper and installs the update
+# Arguments: The arguments of the initial run, if empty we assume that this is not an auto but manual update, exiting the application afterwards
+update_helper () {
 
     CURRENT_DIR=$(pwd)
     GIT_DIR=$(dirname $(readlink -f $0))
@@ -344,7 +394,7 @@ update_helper () {
             echo "no update available"
             cd $CURRENT_DIR
             if [ $# -eq 0 ]; then
-                exit_duplicati 1 "update"
+                return
             else
                 echo
             fi

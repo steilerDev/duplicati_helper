@@ -7,3 +7,6 @@ After=LCDd.service
 Type=simple
 User=root
 ExecStart=/usr/bin/python /opt/duplicati_helper/lcdproc/duplicati_lcdproc.py > /var/log/duplicati.lcdproc.cli.log 2>&1
+
+[Install]
+WantedBy=multi-user.target
