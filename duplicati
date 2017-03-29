@@ -29,7 +29,7 @@ main () {
         ## Show the status, displayed 
             duplicati_status $2
     elif [ "$1" = "update" ] ; then
-        ## Update the helper & duplicati
+        ## Update the helper
             update
     elif [ "$1" = "permissions" ] ; then
         ## Setting permissions
@@ -39,7 +39,7 @@ main () {
             help
     elif ( [ "$1" == "repair" ] || [ "$1" == "backup" ] ) ; then
         if [ "$HELPER_AUTO_UPDATE" = "true" ] ; then
-            update_helper $@
+            update $@
         fi
         ## Backup or repair specified backup
             run_duplicati $1 $2 $3
@@ -291,9 +291,13 @@ update () {
         return
     fi
 
-    update_helper
-    update_duplicati
-    exit_duplicati 1 "update"
+    if [ $# -eq 0 ]; then
+        update_helper
+        update_duplicati
+        exit_duplicati 1 "update"
+    else
+        update_helper
+    fi
 }
 
 update_duplicati () {
