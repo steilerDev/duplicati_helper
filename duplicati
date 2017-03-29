@@ -29,7 +29,7 @@ main () {
         ## Show the status, displayed 
             duplicati_status $2
     elif [ "$1" = "update" ] ; then
-        ## Update the helper
+        ## Update the helper & duplicati
             update
     elif [ "$1" = "permissions" ] ; then
         ## Setting permissions
