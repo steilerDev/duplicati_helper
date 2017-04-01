@@ -379,16 +379,17 @@ update_helper () {
                         set_permissions                         
                         cd $CURRENT_DIR
                         echo "Your helper is now up-to-date!"
+                        return 1
                         ;;
                     [Nn]* )
                         cd $CURRENT_DIR
                         echo "Not updating helper!"
+                        return 1
                         ;;
                     * )
                         echo "Please answer 'y' for yes or 'n' for no.";;
                 esac
             done
-            return 1
         else
             echo "no update available"
             cd $CURRENT_DIR
