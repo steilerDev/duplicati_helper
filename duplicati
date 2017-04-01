@@ -38,9 +38,6 @@ main () {
         ## If provided arguments do not fit, show help
             help
     elif ( [ "$1" == "repair" ] || [ "$1" == "backup" ] ) ; then
-        if [ "$HELPER_AUTO_UPDATE" = "true" ] ; then
-            update $@
-        fi
         ## Backup or repair specified backup
             run_duplicati $1 $2 $3
     elif ( [ "$1" == "kill" ] ) ; then
@@ -291,25 +288,32 @@ update () {
         return
     fi
 
-    if [ $# -eq 0 ]; then
-        update_helper
-        update_duplicati
-        exit_duplicati 1 "update"
-    else
-        update_helper
-    fi
+    update_helper
+    update_duplicati
+    exit_duplicati 1 "update"
 }
 
 update_duplicati () {
     # Get current duplicati version
     echo -n "Checking for duplicati updates..."
+    # Get current version from command line (Version Number followed by date & release type)
     CURRENT_VERSION=$($DUPLICATI | grep -ohE "Version:  - .*$" | sed 's/Version:  \- //g')
+    # Extract only version number
+    CURRENT_VERSION=$(echo $CURRENT_VERSION | grep -Eoh "(2\.([0-9]*\.?)*)" | head -n1)
+    # Get latest release version through github's release API (Version Number-VersionNumber followed by date & release type
     LATEST_VERSION=$(curl -s https://api.github.com/repos/duplicati/duplicati/releases | grep "\"name\":" | grep -ohE "\"v.*\",$" | sed 's/\(\"v\|\",\)//g' | head -n 1)
+    # Extract only version number
+    LATEST_VERSION=$(echo $LATEST_VERSION | grep -Eoh "(2\.([0-9]*\.?)*)" | head -n1)
+    echo
+    echo "--${CURRENT_VERSION}--"
+    echo "--${LATEST_VERSION}--"
     if [ "$CURRENT_VERSION" == "$LATEST_VERSION" ] ; then
         echo "current version ($CURRENT_VERSION) is already latest version ($LATEST_VERSION)!"
         return
     else
         echo "found new version ($CURRENT_VERSION vs. $LATEST_VERSION), installing..."
+        exit
+
         CURRENT_DIR=$(pwd)
         DUPLICATI_DIR=$(echo $DUPLICATI | sed 's/\(mono \|Duplicati.CommandLine.exe\)//g')
         DUPLICATI_TEMP="new_duplicati.zip"
@@ -457,7 +461,7 @@ help () {
     echo "  Job status:     $0 status <backup name>"
     echo "      Shows the live log output of the specified job, using tail"
     echo "  Manual update:  $0 update"
-    echo "      Checks for updates of the duplicati helper and installs them"
+    echo "      Checks for updates of the duplicati helper & duplicati and installs them"
     echo "  Duplicati:      $0 command"
     echo "      The duplicati command line interface is started with all arguments that follow 'command'"
     exit_duplicati 3 "help"

@@ -214,7 +214,6 @@ config_duplicati_helper () {
     config_duplicati_helper_item "SERVER_PAS" "Password1!" "Specify the password for the webinterface"
 
     print_config_header "Helper settings"
-    config_duplicati_helper_item "HELPER_AUTO_UPDATE" "true" "Do you want to enable auto-updates for the helper programs before executing the 'duplicati' command?" "Choose 'true' or 'false', manual updates are still possible through 'duplicati update'"
     config_duplicati_helper_item "DUPLICATI_UPDATE_POLICY" "InstallBefore" "Specify the update strategy of duplicati itself" "Available values are: 'CheckBefore', 'CheckDuring', 'CheckAfter', 'InstallBefore', 'InstallDuring', 'InstallAfter', 'Never'"
 
     print_config_header "Helper file permissions"

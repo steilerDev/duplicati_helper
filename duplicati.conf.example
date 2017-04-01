@@ -33,8 +33,6 @@ SERVER_PAS="Password1!"
 BACKUP_CONFIG="/opt/duplicati_helper/backup.conf.example"
 ## This is the path to the duplicatirc file
 DUPLICATIRC="/opt/duplicati_helper/duplicatirc"
-## Specifies if the script should automatically check and install updates from Github
-HELPER_AUTO_UPDATE="true"
 
 # Advanced duplicati settings
 ## These are command line arguments for duplicati, sorted by topic. The value needs to be surounded by escaped double quotes.
