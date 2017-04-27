@@ -33,19 +33,36 @@ main () {
             duplicati_status $2
     elif [ "$1" = "update" ] ; then
         ## Update the helper
+            enable_sudo 
             update
     elif [ "$1" = "permissions" ] ; then
         ## Setting permissions
+            enable_sudo 
             set_permissions
     elif [ "$#" -lt 2 ] ; then 
         ## If provided arguments do not fit, show help
             help
     elif ( [ "$1" == "repair" ] || [ "$1" == "backup" ] ) ; then
         ## Backup or repair specified backup
+            check_for_root
             run_duplicati $1 $2 $3
     elif ( [ "$1" == "kill" ] ) ; then
         ## Kill running duplicati process
+            check_for_root
             kill_duplicati $2
+    fi
+}
+
+enable_sudo () {
+    echo "In order to run the commands you need to be sudo..."
+    sudo -k
+}
+
+check_for_root () {
+    echo "Checking for root"
+    if [ "$EUID" -ne 0 ] ; then 
+        echo "Please run as root, not sudo!"
+        exit
     fi
 }
 
@@ -211,7 +228,7 @@ run_duplicati () {
     success=$?
     rm ${THIS_DUPLICATI_PID}
 
-    if [ -z $retry ] && [ $success = 100 ] && ["$1" = "backup" ] ; then
+    if [ -z $retry ] && [ $success = 100 ] && [ "$1" = "backup" ] ; then
         retry="true"
         success = $(run_duplicati repair $2 $3)
         echo "Retrying with repair"
@@ -312,7 +329,6 @@ update_duplicati () {
         return
     else
         echo "found new version ($CURRENT_VERSION vs. $LATEST_VERSION), installing..."
-        exit
 
         CURRENT_DIR=$(pwd)
         DUPLICATI_DIR=$(echo $DUPLICATI | sed 's/\(mono \|Duplicati.CommandLine.exe\)//g')
@@ -327,8 +343,8 @@ update_duplicati () {
 
         echo -n "Moving current installation out of the way..."
         cd ..
-        mv $DUPLICATI_DIR $DUPLICATI_TEMP_DIR
-        mkdir $DUPLICATI_DIR
+        sudo mv $DUPLICATI_DIR $DUPLICATI_TEMP_DIR
+        sudo mkdir $DUPLICATI_DIR
         cd $DUPLICATI_DIR
         echo "Done"
 
@@ -340,6 +356,9 @@ update_duplicati () {
         echo -n "Installing latest Duplicati release..."
         sudo unzip $DUPLICATI_TEMP > /dev/null 2>&1
         sudo rm -f $DUPLICATI_TEMP
+
+        sudo chmod +x lvm-scripts/*.sh
+
         cd ..
         sudo rm -rf $DUPLICATI_TEMP_DIR
         echo "Done"
@@ -407,14 +426,14 @@ update_helper () {
 set_permissions () {
     if [ $MANAGE_FILE_PERMISSIONS = "true" ] ; then
         echo -n "Correcting permissions..."
-        chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} .
-        chmod $FP_BACKUP_CONF ./backup.conf
-        chmod $FP_DUPLICATI ./duplicati
-        chmod $FP_DUPLICATI_CONF ./duplicati.conf
-        chmod $FP_DUPLICATI_COMPLETION ./duplicati_completion
-        chmod $FP_DUPLICATIRC ./duplicatirc
-        chmod $FP_INSTALL ./install.sh
-        chmod $FP_SHUTDOWN ./shutdown
+        sudo chown -R ${DUPLICATI_USER}:${DUPLICATI_GROUP} .
+        sudo chmod $FP_BACKUP_CONF ./backup.conf
+        sudo chmod $FP_DUPLICATI ./duplicati
+        sudo chmod $FP_DUPLICATI_CONF ./duplicati.conf
+        sudo chmod $FP_DUPLICATI_COMPLETION ./duplicati_completion
+        sudo chmod $FP_DUPLICATIRC ./duplicatirc
+        sudo chmod $FP_INSTALL ./install.sh
+        sudo chmod $FP_SHUTDOWN ./shutdown
         echo "Done"
     fi
 }
